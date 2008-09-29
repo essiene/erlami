@@ -65,7 +65,7 @@ loop(Socket, Tid, Dict) ->
                     loop(Socket, Tid + 1, NewDict)
             end;
         {response, Response, RDict} ->
-            logmessage(dict:to_list(RDict)),
+            ami_util:logmessage(dict:to_list(RDict)),
             Message = dict:fetch(message, RDict),
             ActionId = list_to_integer(dict:fetch(actionid, RDict)),
             case dict:find(ActionId, Dict) of
@@ -76,16 +76,8 @@ loop(Socket, Tid, Dict) ->
                     loop(Socket, Tid, Dict)
             end;
         {event, _, Edict} ->
-            logmessage(dict:to_list(Edict)),
+            ami_util:logmessage(dict:to_list(Edict)),
             loop(Socket, Tid, Dict)
     end.
 
-logmessage([]) ->
-    io:format("~n");
-logmessage([{Key, Value} | T]) when is_list(Value) ->
-    io:format("~w~n", [{Key, list_to_atom(Value)}]),
-    logmessage(T);
-logmessage(Message) when is_list(Message)->
-    io:format("~s~n", [Message]);
-logmessage(Any) ->
-    io:format("~w~n", [Any]).
+

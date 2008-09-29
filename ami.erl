@@ -64,21 +64,21 @@ connect(AsteriskHost, AMIPort, Username, Secret) ->
         {ok, Socket} -> 
             case banner(Socket) of
                 {ok, Banner} ->
-                    logmessage(Banner),
+                    ami_util:logmessage(Banner),
                     case login(Socket, Username, Secret) of
                         {error, Reason} ->
-                            logmessage(Reason),
+                            ami_util:logmessage(Reason),
                             {error, Reason};
                         {ok, Message} ->
-                            logmessage(Message),
+                            ami_util:logmessage(Message),
                             {ok, Socket}
                     end;
                 {error, Reason} ->
-                    logmessage(Reason),
+                    ami_util:logmessage(Reason),
                     {error, Reason}
             end;
         {error, Reason} ->
-            logmessage(Reason),
+            ami_util:logmessage(Reason),
             {error, Reason}
     end.
 
@@ -152,7 +152,3 @@ first_recv(Socket, Remainder) ->
         {error, Reason} ->
             {error, Reason}
     end.
-
-
-logmessage(Message) ->
-    io:format("~s~n", [Message]).

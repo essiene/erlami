@@ -4,7 +4,7 @@
         build_command/1,
         build_vars/1,
         parse_response/1,
-        is_response_complete/1
+        logmessage/1
     ]).
 
 build_command(ListOfTuples) ->
@@ -47,10 +47,12 @@ lines_to_dict([H | T], Dict) ->
 
 
 
-is_response_complete(Str) ->
-    case string:substr(Str, string:len(Str) - 3) of
-        "\r\n\r\n" ->
-            true;
-        _ ->
-            false
-    end.
+logmessage([]) ->
+    io:format("~n");
+logmessage([{Key, Value} | T]) when is_list(Value) ->
+    io:format("~w~n", [{Key, list_to_atom(Value)}]),
+    logmessage(T);
+logmessage(Message) when is_list(Message)->
+    io:format("~s~n", [Message]);
+logmessage(Any) ->
+    io:format("~w~n", [Any]).

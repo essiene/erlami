@@ -24,7 +24,7 @@ loop(Remainder) ->
         {tcp_closed, Socket} ->
             gen_tcp:close(Socket);
         {tcp_error, _, Reason} ->
-            logmessage(Reason),
+            ami_util:logmessage(Reason),
             loop(Remainder)
     end.
 
@@ -43,11 +43,9 @@ send_list_of_string([H | T]) ->
                 {ok, Event} ->
                     ami_msg:notify({event, Event, Dict});
                 error ->
-                    logmessage({invalid_message, dict:to_list(Dict)})
+                    ami_util:logmessage("****Invalid Message****"),
+                    ami_util:logmessage(dict:to_list(Dict)),
+                    ami_util:logmessage("***********************")
             end
     end,
     send_list_of_string(T).
-
-
-logmessage(Message) ->
-    io:format("~s~n", [Message]).
