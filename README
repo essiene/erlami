@@ -1,0 +1,17 @@
+AMI Subsystem
+===============
+
+Current State of affairs:
+
+1. We connect to Asterisk AMI, grab the banner, authenticate and
+   start ami_recv:loop() which is the receiving processor for
+   messages coming in from the open'd Socket.
+2. We spawn off and register the process in Step 1 above from the 
+   function ami:new/[4,2].
+3. ami:new/[4,2] is also responsible for starting the ami_msg process.
+   This is the process that recieves commands from users and sends via
+   the Socket to AMI and also, recieves FULLY ASSEMBLED messages from
+   the ami_recv:loop/1 process.
+
+This is the very basics of the whole infrastructure. More details to come
+in soon.
