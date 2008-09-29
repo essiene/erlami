@@ -3,62 +3,86 @@
 -export([
         new/2,
         new/4,
-        originate/7
+        init/2,
+        init/4,
+        send_cmd/1,
+        originate/4
     ]).
 
--define(CONNECT_OPTION, [list, inet, {active, false}, {recbuf, 1024000}]).
+-define(CONNECT_OPTION, [list, inet, {active, false}]).
 
+new(Host, Port, Username, Secret) ->
+    register(ami_recv, spawn(?MODULE, init, [Host, Port, Username, Secret])).
+new(Username, Secret) ->
+    register(ami_recv, spawn(?MODULE, init, [Username, Secret])).
+
+init(Username, Secret) ->
+    init("localhost", 5038, Username, Secret).
+
+init(Host, Port, Username, Secret) ->
+    case connect(Host, Port, Username, Secret) of
+        {error, Reason} ->
+            {error, Reason};
+        {ok, Socket} ->
+            ami_msg:start(Socket),
+            inet:setopts(Socket, [{active, true}]),
+            ami_recv:loop("")
+    end.
+
+
+originate(Channel, Context, Extension, Priority) ->
+    send_cmd([
+            {action, "originate"},
+            {channel, Channel},
+            {context, Context},
+            {exten, Extension},
+            {pRiority, Priority}
+        ]).
+
+send_cmd(Command) ->
+    case ami_msg:send(Command) of
+        {ok, _} -> 
+            get_response();
+        Other ->
+            Other
+    end.
+
+
+get_response() ->
+    receive
+        Message ->
+            Message
+    end.
 
 %%-----------------------
-%% ami:new(AsteriskHost, AMIPort, Username, Secret) ->
+%% ami:init(AsteriskHost, AMIPort, Username, Secret) ->
 %%  {ok, AMI} | {error, Reason}
 %%------------------------
 
-new(Username, Secret) ->
-    new("localhost", 5038, Username, Secret).
-
-new(AsteriskHost, AMIPort, Username, Secret) ->
+connect(AsteriskHost, AMIPort, Username, Secret) ->
     case gen_tcp:connect(AsteriskHost, AMIPort, ?CONNECT_OPTION) of
         {ok, Socket} -> 
             case banner(Socket) of
-                {ok, Banner} -> 
+                {ok, Banner} ->
                     logmessage(Banner),
                     case login(Socket, Username, Secret) of
-                        {ok, Response} -> 
-                            logmessage(Response),
-                            CmdPid = ami_msg:start(Socket),
-                            RcvPid = ami_recv:start(CmdPid),
-                            inet:setopts(Socket, [{action, true}]),
-                            gen_tcp:controlling_process(Socket, RcvPid),
-                            CmdPid;
                         {error, Reason} ->
-                            {error, Reason}
+                            logmessage(Reason),
+                            {error, Reason};
+                        {ok, Message} ->
+                            logmessage(Message),
+                            {ok, Socket}
                     end;
                 {error, Reason} ->
+                    logmessage(Reason),
                     {error, Reason}
             end;
         {error, Reason} ->
+            logmessage(Reason),
             {error, Reason}
     end.
 
-logmessage(Message) ->
-    io:format("~s~n", [Message]).
 
-
-
-originate(AMI, Chan, Ctx, Exten, Prio, Timeout, Vars) ->
-    case send(AMI, "originate", [
-                {channel, Chan},
-                {context, Ctx},
-                {exten, Exten},
-                {pRiority, Prio}, % priority is a keyword
-                {timeout, Timeout}
-                | ami_util:build_vars(Vars)]) of
-        {ok, Response} ->
-            {ok, Response};
-        {error, Reason} ->
-            {error, Reason}
-    end.
 
 
 %%=======================================================
@@ -74,7 +98,9 @@ originate(AMI, Chan, Ctx, Exten, Prio, Timeout, Vars) ->
 banner(Socket) ->
     case gen_tcp:recv(Socket, 0) of 
         {ok, Banner} ->
-            {ok, string:strip(Banner)};
+            Banner1 = string:strip(Banner),
+            Banner2 = string:strip(Banner1),
+            {ok, Banner2};
         {error, Reason} ->
             {error, Reason}
     end.
@@ -89,52 +115,44 @@ banner(Socket) ->
 
 
 login(Socket, Username, Secret) ->
-    case send(Socket, "login", [{username, Username}, {secret, Secret}]) of
-        {ok, Response} ->
-            {ok, Response};
+    case send(Socket, "login", [{username, Username}, {secret, Secret}], 0) of
+        {ok, _} ->
+            first_recv(Socket, "");
         {error, Reason} ->
             {error, Reason}
     end.
 
-send(Socket, Action, Params) ->
-    Command = ami_util:build_command([{action, Action} , {actionid, "11223"} |  Params]),
+send(Socket, Action, Params, ActionId) ->
+    Id = integer_to_list(ActionId),
+    Command = ami_util:build_command([{action, Action} , {actionid, Id} |  Params]),
     case gen_tcp:send(Socket, Command) of
         ok -> 
-            recv(Socket);
+            {ok, ActionId};
         {error, Reason} ->
             {error, Reason}
     end.
 
-recv(Socket) ->
+first_recv(Socket, Remainder) ->
     case gen_tcp:recv(Socket, 0) of
-        {ok, Packet} -> 
-            ResponseDict = ami_util:parse_response(Packet), 
-            check_response(ResponseDict);
+        {ok, Data} -> 
+            NewData = string:concat(Remainder, Data),
+            case processor:extract_packets(NewData, "\r\n\r\n") of
+                {[CompleteData], ""} ->
+                    ResponseDict = ami_util:parse_response(CompleteData),
+                    Message = dict:fetch(message, ResponseDict),
+                    case dict:find(response, ResponseDict) of
+                        {ok, "Success"} ->
+                            {ok, Message};
+                        {ok, "Error"} ->
+                            {error, Message}
+                    end;
+                {_, NewRemainder} ->
+                    first_recv(Socket, NewRemainder)
+            end;
         {error, Reason} ->
             {error, Reason}
     end.
 
 
-check_response(Dict) ->
-    case dict:find(response, Dict) of
-        {ok, Response} ->
-            case dict:find(actionid, Dict) of
-                {ok, _} ->
-                    case dict:find(message, Dict) of
-                        {ok, Message} ->
-                            logmessage("Found Message"),
-                            case Response of
-                                "Success" ->
-                                    {ok, Message};
-                                "Error" ->
-                                    {error, Message}
-                            end;
-                        error ->
-                            logmessage("Message missing")
-                    end;
-                error ->
-                    logmessage("ActionId missing")
-            end;
-        error -> 
-            io:format("Invalid Response => ~w~n", [Dict])
-    end.
+logmessage(Message) ->
+    io:format("~s~n", [Message]).

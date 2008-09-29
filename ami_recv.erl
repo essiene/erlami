@@ -1,49 +1,52 @@
 -module(ami_recv).
 -export([
-        start/1,
-        loop/2,
-        send_list_of_string/2
+        start/0,
+        loop/1,
+        send_list_of_string/1
     ]).
 
-start(CmdPid) ->
-    spawn(?MODULE, loop, [CmdPid, ""]).
+start() ->
+    spawn(?MODULE, loop, [""]).
 
 
-loop(CmdPid, Remainder) ->
-    logmessage("~n==========Rcv Loop=========~n"),
+loop(Remainder) ->
     receive
+        {ping, Pid} ->
+            Pid ! {ok, pong},
+            loop(Remainder);
+        {stop, Pid, Reason} ->
+            Pid ! {stop, Reason};
         {tcp, _Socket, Data} ->
             NewData = string:concat(Remainder, Data),
             {ListOfStrings, NewRemainder} = processor:extract_packets(NewData, "\r\n\r\n"),
-            async_send_list_of_string(ListOfStrings, CmdPid),
-            loop(CmdPid, NewRemainder);
+            async_send_list_of_string(ListOfStrings),
+            loop(NewRemainder);
         {tcp_closed, Socket} ->
-            gen_tcp:close(Socket),
-            true;
+            gen_tcp:close(Socket);
         {tcp_error, _, Reason} ->
             logmessage(Reason),
-            loop(CmdPid, Remainder)
+            loop(Remainder)
     end.
 
-async_send_list_of_string(ListOfStrings, CmdPid) ->
-    spawn(?MODULE, send_list_of_string, [ListOfStrings, CmdPid]).
+async_send_list_of_string(ListOfStrings) ->
+    spawn(?MODULE, send_list_of_string, [ListOfStrings]).
 
-send_list_of_string([], _) -> 
+send_list_of_string([]) -> 
     true;
-send_list_of_string([H | T], CmdPid) ->
+send_list_of_string([H | T]) ->
     Dict = ami_util:parse_response(H),
     case dict:find(response, Dict) of
         {ok, Response} ->
-            CmdPid ! {response, Response, Dict};
+            ami_msg:notify({response, Response, Dict});
         error ->
             case dict:find(event, Dict) of
                 {ok, Event} ->
-                    CmdPid ! {event, Event, Dict};
+                    ami_msg:notify({event, Event, Dict});
                 error ->
-                    true
+                    logmessage({invalid_message, dict:to_list(Dict)})
             end
     end,
-    send_list_of_string(T, CmdPid).
+    send_list_of_string(T).
 
 
 logmessage(Message) ->
