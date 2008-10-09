@@ -5,7 +5,8 @@
         ping/0,
         send/1,
         notify/1,
-        stop/0
+        stop/0,
+        stop/1
     ]).
 
 
@@ -33,8 +34,17 @@ send(Command) ->
             {error, no_response}
     end.
 
+stop(Reason) ->
+    ami_msg ! {stop, self(), Reason},
+    receive 
+        Any ->
+            Any
+    after 5000 ->
+            {error, no_response}
+    end.
+
 stop() ->
-    ami_msg ! {stop, self()},
+    ami_msg ! {stop, self(), "Default Reason"},
     receive 
         Any ->
             Any
@@ -66,11 +76,12 @@ loop(Socket, Tid, Dict) ->
             end;
         {response, Response, RDict} ->
             ami_util:logmessage(dict:to_list(RDict)),
-            Message = dict:fetch(message, RDict),
             ActionId = list_to_integer(dict:fetch(actionid, RDict)),
+            RDict1 = dict:erase(actionid, RDict),
+            RDict2 = dict:erase(response, RDict1),
             case dict:find(ActionId, Dict) of
                 {ok, RPid} -> 
-                    RPid ! {response, Response, Message}, 
+                    RPid ! {Response, RDict2}, 
                     loop(Socket, Tid, Dict);
                 error ->
                     loop(Socket, Tid, Dict)
