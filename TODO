@@ -1,0 +1,6 @@
+- Re organize entire project source files
+- Consider dumping the Dict() and using TupleLists with
+  keyX functions from lists module
+- Start implementing unit tests
+- Implement Event processor, first for Channel handling for Originate
+- HTTPD integration
