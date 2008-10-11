@@ -63,10 +63,15 @@ append_mark(String) ->
 
 remove_mark("") -> "";
 remove_mark(MarkedString) ->
-    TotalLen = string:len(MarkedString),
-    MarkerLen = string:len(?MARK),
-    MarkerPosition = TotalLen - MarkerLen,
-    string:substr(MarkedString, 1, MarkerPosition).
+    case string:str(MarkedString, ?MARK) of
+        0 ->
+            MarkedString;
+        _ ->
+            TotalLen = string:len(MarkedString),
+            MarkerLen = string:len(?MARK),
+            MarkerPosition = TotalLen - MarkerLen,
+            string:substr(MarkedString, 1, MarkerPosition)
+    end.
 
 
 %% ---------------------------------------------------------------------
