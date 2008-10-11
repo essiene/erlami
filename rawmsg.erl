@@ -80,18 +80,30 @@ remove_mark(MarkedString) ->
 %% @end
 %% ---------------------------------------------------------------------
 
-split(String, Str) ->
-    split(String, Str, []).
+split(String, Seperator) ->
+    split(String, Seperator, []).
 
-split(String, Str, Accm) ->
-    SeperatorLen = string:len(Str),
-    case string:rstr(String, Str) of
+% Handles case split("", "SEP") -> []
+split("", _, Accm) ->
+    Accm;
+% Handles case split("SEP", "SEP") -> []
+split(Seperator, Seperator, Accm) ->
+    Accm;
+% Catches the bug inherent when "SEP" happens to 
+% terminate the string, else, we'll always have
+% an extra "" at the end of the resulting list
+split(Tail, Seperator, ["" | Accm]) ->
+    split(Tail, Seperator, Accm);
+% The normal form
+split(String, Seperator, Accm) ->
+    SeperatorLen = string:len(Seperator),
+    case string:rstr(String, Seperator) of
         0 ->
             [String | Accm];
         Index ->
             Head = string:substr(String, Index + SeperatorLen),
             Tail = string:substr(String, 1, Index - 1),
-            split(Tail, Str, [Head | Accm])
+            split(Tail, Seperator, [Head | Accm])
     end.
 
 
@@ -111,4 +123,3 @@ get_blocks_and_incomplete([LastBlock], Accm) ->
     {Accm, remove_mark(LastBlock)};
 get_blocks_and_incomplete([H | T], Accm) ->
     get_blocks(T, [H | Accm]).
-
