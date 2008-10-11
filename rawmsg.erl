@@ -115,11 +115,19 @@ split(String, Seperator, Accm) ->
 %% ---------------------------------------------------------------------
 
 get_blocks_and_incomplete(RawListOfString) ->
-    get_blocks_and_incomplete(RawListOfString, []).
+    {ListOfStrings, Incomplete} = get_blocks_and_incomplete(RawListOfString, ?MARK, []),
+    {lists:reverse(ListOfStrings), Incomplete}.
 
-get_blocks_and_incomplete([], Accm) ->
+get_blocks_and_incomplete([], _Mark, Accm) ->
     {Accm, ""};
-get_blocks_and_incomplete([LastBlock], Accm) ->
-    {Accm, remove_mark(LastBlock)};
-get_blocks_and_incomplete([H | T], Accm) ->
-    get_blocks(T, [H | Accm]).
+get_blocks_and_incomplete([LastBlock], Mark, Accm) ->
+    % implement util:startwith(String, Check)
+    % and util:endswith(String, Check)
+    case string:str(LastBlock, Mark) of
+        0 ->
+            {[LastBlock | Accm], ""};
+        _ ->
+            {Accm, remove_mark(LastBlock)}
+    end;
+get_blocks_and_incomplete([H | T], Mark, Accm) ->
+    get_blocks_and_incomplete(T, Mark, [H | Accm]).
