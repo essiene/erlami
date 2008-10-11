@@ -2,7 +2,6 @@
 -author("Essien Ita Essien <essien.ita@uknglobal.com>").
 -export([
         build_command/1,
-        build_vars/1,
         parse_response/1,
         logmessage/1
     ]).
@@ -19,17 +18,6 @@ build_line(LHS, RHS) ->
     S1 = string:concat(string:to_upper(atom_to_list(LHS)), ": "),
     S2 = string:concat(S1, RHS),
     string:concat(S2, "\r\n").
-
-
-build_vars(ListOfTuples) ->
-    build_vars(ListOfTuples, []).
-
-build_vars([{Key, Value} | T], Accm) ->
-    V = string:concat(string:to_upper(atom_to_list(Key)), "="),
-    V1 = string:concat(V, Value),
-    build_vars(T, [{variable, V1} | Accm]);
-build_vars([], Accm) ->
-    Accm.
 
 
 parse_response(Response) ->
