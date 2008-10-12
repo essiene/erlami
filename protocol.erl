@@ -1,26 +1,25 @@
--module(ami_util).
--author("Essien Ita Essien <essien.ita@uknglobal.com>").
+-module(protocol).
 -export([
-        build_command/1,
-        parse_response/1,
-        logmessage/1
+        request_build/1,
+        response_parse/1
     ]).
 
-build_command(ListOfTuples) ->
-    build_command(ListOfTuples, "").
 
-build_command([{Key, Value} | T], Command) ->
-    build_command(T, string:concat(Command, build_line(Key, Value)));
-build_command([], Command) ->
+request_build(ListOfTuples) ->
+    request_build(ListOfTuples, "").
+
+request_build([{Key, Value} | T], Command) ->
+    request_build(T, string:concat(Command, build_request_line(Key, Value)));
+request_build([], Command) ->
     string:concat(Command, "\r\n").
 
-build_line(LHS, RHS) ->
+build_request_line(LHS, RHS) ->
     S1 = string:concat(string:to_upper(atom_to_list(LHS)), ": "),
     S2 = string:concat(S1, RHS),
     string:concat(S2, "\r\n").
 
 
-parse_response(Response) ->
+response_parse(Response) ->
     Stripped = string:strip(Response),
     Lines = string:tokens(Stripped, "\r\n"),
     lines_to_dict(Lines, dict:new(), "", false).
@@ -54,12 +53,3 @@ lines_to_dict([H | T], Dict, ExtraMessage, GrabExtraFlag) ->
                 end
         end.
 
-
-
-logmessage([]) ->
-    io:format("~n");
-logmessage([{Key, Value} | T]) when is_list(Value) ->
-    io:format("~p~n", [{Key, Value}]),
-    logmessage(T);
-logmessage(Any) ->
-    io:format("~p~n", [Any]).

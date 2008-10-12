@@ -1,6 +1,10 @@
 -module(test_rawmsg).
 -include_lib("eunit/include/eunit.hrl").
 
+
+
+
+
 append_mark_empty_test() ->
     ?assertEqual("", rawmsg:append_mark("")).
 
@@ -24,28 +28,6 @@ remove_mark_marked_test() ->
 
 
 
-split_test() ->
-    ?assertEqual(["string_one", "string_two", "string_three"], rawmsg:split("string_oneSEPstring_twoSEPstring_three", "SEP")).
-
-split_no_seperator_test() ->
-    ?assertEqual(["string_one"], rawmsg:split("string_one", "SEP")).
-
-split_empty_string_test() ->
-    ?assertEqual([], rawmsg:split("", "SEP")).
-
-split_terminating_seperator_test() ->
-    ?assertEqual(["string_one", "string_two"], rawmsg:split("string_oneSEPstring_twoSEP", "SEP")).
-
-split_single_part_terminating_seperator_test() ->
-    ?assertEqual(["string_one"], rawmsg:split("string_oneSEP", "SEP")).
-
-split_seperator_only_test() ->
-    ?assertEqual([], rawmsg:split("SEP", "SEP")).
-
-
-
-
-
 get_blocks_and_incomplete_empty_list_test() ->
     ?assertEqual({[], ""}, rawmsg:get_blocks_and_incomplete([])).
 
@@ -63,7 +45,6 @@ get_blocks_and_multiple_no_incomplete_test() ->
 
 get_blocks_multiple_and_incomplete_test() ->
     ?assertEqual({["string1", "string2", "string3"], "string4"}, rawmsg:get_blocks_and_incomplete(["string1", "string2", "string3", "string4PROCESSORMARK"])).
-
 
 
 

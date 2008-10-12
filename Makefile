@@ -5,10 +5,13 @@
 	erlc -W $<
 
 
-OBJECTS=rawmsg.beam
+OBJECTS=util.beam \
+		rawmsg.beam \
+		protocol.beam \
 
 
-TESTS=test_rawmsg.beam
+TESTS=test_util.beam \
+	  test_rawmsg.beam
 
 
 all: $(OBJECTS)
@@ -21,5 +24,6 @@ clean:
 
 
 test: $(OBJECTS) $(TESTS)
+	erl -noshell  -s test_util test -s init stop
 	erl -noshell  -s test_rawmsg test -s init stop
 

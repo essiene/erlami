@@ -3,7 +3,6 @@
         get_blocks/2,
         append_mark/1,
         remove_mark/1,
-        split/2,
         get_blocks_and_incomplete/1
     ]).
 
@@ -38,7 +37,7 @@
 
 get_blocks(RawString, BlockSeperator) ->
     MarkedString = append_mark(RawString),
-    RawListOfBlocks = split(MarkedString, BlockSeperator),
+    RawListOfBlocks = util:split(MarkedString, BlockSeperator),
     get_blocks_and_incomplete(RawListOfBlocks).
 
 %% =====================================================================
@@ -74,37 +73,6 @@ remove_mark(MarkedString) ->
     end.
 
 
-%% ---------------------------------------------------------------------
-%% @doc
-%% @spec split(String, Str) -> [ListOfStrings]
-%% @end
-%% ---------------------------------------------------------------------
-
-split(String, Seperator) ->
-    split(String, Seperator, []).
-
-% Handles case split("", "SEP") -> []
-split("", _, Accm) ->
-    Accm;
-% Handles case split("SEP", "SEP") -> []
-split(Seperator, Seperator, Accm) ->
-    Accm;
-% Catches the bug inherent when "SEP" happens to 
-% terminate the string, else, we'll always have
-% an extra "" at the end of the resulting list
-split(Tail, Seperator, ["" | Accm]) ->
-    split(Tail, Seperator, Accm);
-% The normal form
-split(String, Seperator, Accm) ->
-    SeperatorLen = string:len(Seperator),
-    case string:rstr(String, Seperator) of
-        0 ->
-            [String | Accm];
-        Index ->
-            Head = string:substr(String, Index + SeperatorLen),
-            Tail = string:substr(String, 1, Index - 1),
-            split(Tail, Seperator, [Head | Accm])
-    end.
 
 
 %% ---------------------------------------------------------------------
