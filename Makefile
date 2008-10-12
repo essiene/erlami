@@ -6,12 +6,13 @@
 
 
 OBJECTS=util.beam \
-		rawmsg.beam \
+		messaging.beam \
+		amilist.beam \
 		protocol.beam \
 
 
 TESTS=test_util.beam \
-	  test_rawmsg.beam
+	  test_messaging.beam
 
 
 all: $(OBJECTS)
@@ -25,5 +26,5 @@ clean:
 
 test: $(OBJECTS) $(TESTS)
 	erl -noshell  -s test_util test -s init stop
-	erl -noshell  -s test_rawmsg test -s init stop
+	erl -noshell  -s test_messaging test -s init stop
 
