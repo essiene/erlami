@@ -46,20 +46,31 @@ split_seperator_only_test() ->
 
 
 
-test_get_blocks_and_incomplete_empty_list_test() ->
+get_blocks_and_incomplete_empty_list_test() ->
     ?assertEqual({[], ""}, rawmsg:get_blocks_and_incomplete([])).
 
-test_get_blocks_and_single_test() ->
+get_blocks_and_single_test() ->
     ?assertEqual({["string1"], ""}, rawmsg:get_blocks_and_incomplete(["string1"])).
 
-test_get_blocks_and_no_incomplete_test() ->
+get_blocks_and_no_incomplete_test() ->
     ?assertEqual({["string1", "string2"], ""}, rawmsg:get_blocks_and_incomplete(["string1", "string2"])).
 
-test_get_blocks_and_incomplete_test() ->
+get_blocks_and_incomplete_test() ->
     ?assertEqual({["string1"], "string2"}, rawmsg:get_blocks_and_incomplete(["string1", "string2PROCESSORMARK"])).
 
-test_get_blocks_and_multiple_no_incomplete_test() ->
+get_blocks_and_multiple_no_incomplete_test() ->
     ?assertEqual({["string1", "string2", "string3", "string4"], ""}, rawmsg:get_blocks_and_incomplete(["string1", "string2", "string3", "string4"])).
 
-test_get_blocks_multiple_and_incomplete_test() ->
+get_blocks_multiple_and_incomplete_test() ->
     ?assertEqual({["string1", "string2", "string3"], "string4"}, rawmsg:get_blocks_and_incomplete(["string1", "string2", "string3", "string4PROCESSORMARK"])).
+
+
+
+
+
+
+get_blocks_incomplete_test() ->
+    ?assertEqual({["string1,string2,string3"], "string4,string5,string6"}, rawmsg:get_blocks("string1,string2,string3SEPstring4,string5,string6", "SEP")).
+
+get_blocks_no_incomplete_test() ->
+    ?assertEqual({["string1,string2,string3", "string4,string5,string6"], ""}, rawmsg:get_blocks("string1,string2,string3SEPstring4,string5,string6SEP", "SEP")).
