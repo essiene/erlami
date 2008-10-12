@@ -2,6 +2,9 @@
 -author("Essien Ita Essien <essien.ita@uknglobal.com>").
 -export([
         split/2,
+        lstrip/1,
+        rstrip/1,
+        strip/1,
         append_mark/1,
         remove_mark/1,
         get_seperated_blocks_and_incomplete/1,
@@ -42,6 +45,39 @@ split(String, Seperator, Accm) ->
             Tail = string:substr(String, 1, Index - 1),
             split(Tail, Seperator, [Head | Accm])
     end.
+
+
+%% --------------------------------------------------------------------
+%% @doc
+%% @spec lstrip(String) -> StringWithoutLeftMostWhiteSpaces
+%% @end
+%% --------------------------------------------------------------------
+
+lstrip("") ->
+    "";
+lstrip([H | RestOfString]) -> 
+    case lists:member(H, [32, $\t, $\r, $\n]) of
+        false ->
+            [H | RestOfString];
+        true ->
+            lstrip(RestOfString)
+    end.
+
+
+rstrip("") ->
+    "";
+rstrip(String) ->
+    S1 = lists:reverse(String),
+    S2 = lstrip(S1),
+    lists:reverse(S2).
+
+strip("") ->
+    "";
+strip(String) ->
+    S1 = lists:reverse(String),
+    S2 = lstrip(S1),
+    S3 = lists:reverse(S2),
+    lstrip(S3).
 
 
 %% --------------------------------------------------------------------
@@ -101,6 +137,13 @@ get_seperated_blocks_and_incomplete([LastBlock], Mark, Accm) ->
 get_seperated_blocks_and_incomplete([H | T], Mark, Accm) ->
     get_seperated_blocks_and_incomplete(T, Mark, [H | Accm]).
 
+
+%% -------------------------------------------------------------------
+%% @doc
+%% @spec 
+%% @end
+%% -------------------------------------------------------------------
+
 logmessage([]) ->
     io:format("~n");
 logmessage([{Key, Value} | T]) ->
@@ -108,4 +151,3 @@ logmessage([{Key, Value} | T]) ->
     logmessage(T);
 logmessage(Any) ->
     io:format("~p~n", [Any]).
-

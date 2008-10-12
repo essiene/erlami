@@ -1,6 +1,6 @@
 -module(amilist).
 -export([
-        to_lines/1,
+        to_block/1,
         from_lines/1
     ]).
 
@@ -37,17 +37,17 @@
 
 %% ---------------------------------------------------------------------------
 %% @doc
-%% @spec to_lines(ListOfTuples) -> ListOfLines
+%% @spec to_block(ListOfTuples) -> AMIBlock
 %% @end doc
 %% ---------------------------------------------------------------------------
 
 
-to_lines(ListOfTuples) ->
-    to_lines(ListOfTuples, "").
+to_block(ListOfTuples) ->
+    to_block(ListOfTuples, "").
 
-to_lines([{Key, Value} | T], Command) ->
-    to_lines(T, string:concat(Command, create_line(Key, Value)));
-to_lines([], Command) ->
+to_block([{Key, Value} | T], Command) ->
+    to_block(T, string:concat(Command, create_line(Key, Value)));
+to_block([], Command) ->
     string:concat(Command, "\r\n").
 
 %% ---------------------------------------------------------------------------
@@ -56,7 +56,7 @@ to_lines([], Command) ->
 %% @end
 %% ---------------------------------------------------------------------------
 
-create_line(LHS, RHS) ->
+create_line(LHS, RHS) when is_atom(LHS), is_list(RHS) ->
     S1 = string:concat(string:to_upper(atom_to_list(LHS)), ": "),
     S2 = string:concat(S1, RHS),
     string:concat(S2, "\r\n").
@@ -69,18 +69,18 @@ create_line(LHS, RHS) ->
 %% --------------------------------------------------------------------------
 
 from_lines(Lines) ->
-    from_lines(Lines, [], "", false).
+    lists:reverse(from_lines(Lines, [], "", false)).
 
 
 from_lines([], TupleList, "", _) -> TupleList;
-from_lines([], TupleList, ExtraMessage, _) -> [{message, ExtraMessage} | TupleList]; 
+from_lines([], TupleList, ExtraMessage, _) -> [{message, util:strip(ExtraMessage)} | TupleList]; 
 from_lines([H | T], TupleList, ExtraMessage, GrabExtraFlag) ->
         case GrabExtraFlag of
             true ->
                 NewExtraMessage = string:concat(ExtraMessage, H),
                 from_lines(T, TupleList, NewExtraMessage, true);
             false ->
-                StrippedLine = string:strip(H),
+                StrippedLine = util:strip(H),
                 case string:chr(StrippedLine, 32) of
                     0 -> 
                         NewExtraMessage = string:concat(ExtraMessage, H),
@@ -91,11 +91,11 @@ from_lines([H | T], TupleList, ExtraMessage, GrabExtraFlag) ->
                             0 -> 
                                 NewExtraMessage = string:concat(ExtraMessage, H),
                                 from_lines(T, TupleList, NewExtraMessage, true);
-                            _ ->
+                            _ColonIndex ->
                                 [Key] = string:tokens(KeyWithColon, ":"),
                                 LowerCaseKey = string:to_lower(Key),
                                 AtomKey = list_to_atom(LowerCaseKey),
-                                Value = string:strip(string:join(Rest, ":")),
+                                Value = string:join(Rest, " "),
                                 from_lines(T, [{AtomKey, Value} | TupleList], ExtraMessage, false)
                         end
                 end

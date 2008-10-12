@@ -23,6 +23,54 @@ split_seperator_only_test() ->
 
 
 
+lstrip_empty_test() ->
+    ?assertEqual("", util:lstrip("")).
+
+lstrip_no_whitespace_test() ->
+    ?assertEqual("value", util:lstrip("value")).
+
+lstrip_trailing_whitespace_test() ->
+    ?assertEqual("value \r\n", util:lstrip("value \r\n")).
+
+lstrip_test() ->
+    ?assertEqual("value", util:lstrip(" \r\n\t\n\rvalue")).
+
+lstrip_leading_and_trailing_ws_test() ->
+    ?assertEqual("value \r\n", util:lstrip(" \r\n\t\n\rvalue \r\n")).
+
+
+rstrip_empty_test() ->
+    ?assertEqual("", util:rstrip("")).
+
+rstrip_no_whitespace_test() ->
+    ?assertEqual("value", util:rstrip("value")).
+
+rstrip_trailing_whitespace_test() ->
+    ?assertEqual("value", util:rstrip("value \r\n")).
+
+rstrip_leading_whitespace_test() ->
+    ?assertEqual(" \r\n\t\n\rvalue", util:rstrip(" \r\n\t\n\rvalue")).
+
+rstrip_leading_and_trailing_ws_test() ->
+    ?assertEqual(" \r\n\t\n\rvalue", util:rstrip(" \r\n\t\n\rvalue \r\n")).
+
+
+strip_empty_test() ->
+    ?assertEqual("", util:strip("")).
+
+strip_no_whitespace_test() ->
+    ?assertEqual("value", util:strip("value")).
+
+strip_trailing_whitespace_test() ->
+    ?assertEqual("value", util:strip("value \r\n")).
+
+strip_leading_whitespace_test() ->
+    ?assertEqual("value", util:strip(" \r\n\t\n\rvalue")).
+
+strip_leading_and_trailing_ws_test() ->
+    ?assertEqual("value", util:strip(" \r\n\t\n\rvalue \r\n")).
+
+
 append_mark_empty_test() ->
     ?assertEqual("", util:append_mark("")).
 

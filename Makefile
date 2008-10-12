@@ -12,7 +12,8 @@ OBJECTS=util.beam \
 
 
 TESTS=test_util.beam \
-	  test_messaging.beam
+	  test_messaging.beam \
+	  test_amilist.beam
 
 
 all: $(OBJECTS)
@@ -27,4 +28,6 @@ clean:
 test: $(OBJECTS) $(TESTS)
 	erl -noshell  -s test_util test -s init stop
 	erl -noshell  -s test_messaging test -s init stop
+	erl -noshell  -s test_amilist test -s init stop
+
 
