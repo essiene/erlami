@@ -2,7 +2,8 @@
 -export([
         get_blocks/2,
         request_build/1,
-        response_parse/1
+        response_parse/1,
+        tcp_send/2
     ]).
 
 
@@ -45,7 +46,11 @@ response_parse(Response) ->
     Lines = string:tokens(Stripped, "\r\n"),
     amilist:from_lines(Lines).
 
-%% =====================================================================
-%% Private Functions
-%% =====================================================================
 
+tcp_send(Socket, Data) ->
+    case gen_tcp:send(Socket, Data) of
+        {error, Reason} ->
+            throw({send, Reason});
+        ok ->
+            {ok, Data}
+    end.

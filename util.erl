@@ -11,8 +11,8 @@
         logmessage/1
     ]).
 
+-include("ami.hrl").
 
--define(MARK, "PROCESSORMARK").
 
 %% ---------------------------------------------------------------------
 %% @doc

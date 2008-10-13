@@ -9,11 +9,13 @@ OBJECTS=util.beam \
 		messaging.beam \
 		amilist.beam \
 		protocol.beam \
+		amisym_server.beam \
+		amisym.beam
 
 
 TESTS=test_util.beam \
 	  test_messaging.beam \
-	  test_amilist.beam
+	  test_amilist.beam \
 
 
 all: $(OBJECTS)
