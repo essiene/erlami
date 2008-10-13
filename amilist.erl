@@ -3,6 +3,7 @@
         to_block/1,
         from_lines/1,
         from_block/1,
+        new/0,
         has_key/2,
         has_value/2,
         get_value/2,
@@ -72,6 +73,9 @@ from_block(Block) ->
     from_lines(ListOfLines).
 
 
+new() ->
+    [].
+
 has_key(AmiList, Key) ->
     lists:keymember(Key, 1, AmiList).
 
@@ -80,7 +84,7 @@ has_value(AmiList, Value) ->
 
 get_value(AmiList, Key) ->
     case lists:keysearch(Key, 1, AmiList) of
-        {ok, {Key, Value}} ->
+        {value, {Key, Value}} ->
             Value;
         false ->
             throw({keyerror, Key})

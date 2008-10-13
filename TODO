@@ -2,3 +2,7 @@
 - Consider dumping the Dict() and using TupleLists with
   keyX functions from lists module
 - Implement Event processor, first for Channel handling for Originate
+- amilist:from_block and amilist:to_block are not perfectly symmetrical
+  Currently, to_block does not handle the EXTRA PAYLOAD that normally goes
+  with Response: Follows and ends with --END COMMAND--. This has to be
+  a mirror of the process in from_block.
