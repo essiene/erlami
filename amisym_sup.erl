@@ -14,12 +14,10 @@ start(Port) ->
     register(?SYM_REG_NAME, spawn(?MODULE, init, [Port])).
 
 init(Port) ->
-    process_flag(trap_exit, true),
     supervise(Port).
 
 supervise(Port) ->
     ServerPid = amisym_server:start(Port),
-    link(ServerPid),
     loop(Port, ServerPid).
 
 

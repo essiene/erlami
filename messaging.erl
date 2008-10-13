@@ -42,9 +42,10 @@ request_build(ListOfTuples) ->
     amilist:to_lines(ListOfTuples).
 
 response_parse(Response) ->
-    Stripped = string:strip(Response),
-    Lines = string:tokens(Stripped, "\r\n"),
-    amilist:from_lines(Lines).
+    amilist:from_block(Response).
+%    Stripped = string:strip(Response),
+%    Lines = string:tokens(Stripped, "\r\n"),
+%    amilist:from_lines(Lines).
 
 
 tcp_send(Socket, Data) ->

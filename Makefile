@@ -9,7 +9,10 @@ OBJECTS=util.beam \
 		messaging.beam \
 		amilist.beam \
 		protocol.beam \
+		amisym_interp.beam \
+		amisym_session.beam \
 		amisym_server.beam \
+		amisym_sup.beam \
 		amisym.beam
 
 

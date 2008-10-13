@@ -1,7 +1,12 @@
 -module(amilist).
 -export([
         to_block/1,
-        from_lines/1
+        from_lines/1,
+        from_block/1,
+        has_key/2,
+        has_value/2,
+        get_value/2,
+        set_value/3
     ]).
 
 
@@ -61,6 +66,28 @@ create_line(LHS, RHS) when is_atom(LHS), is_list(RHS) ->
     S2 = string:concat(S1, RHS),
     string:concat(S2, "\r\n").
 
+from_block(Block) ->
+    Stripped = util:strip(Block),
+    ListOfLines = string:tokens(Stripped, "\r\n"),
+    from_lines(ListOfLines).
+
+
+has_key(AmiList, Key) ->
+    lists:keymember(Key, 1, AmiList).
+
+has_value(AmiList, Value) ->
+    lists:keymember(Value, 2, AmiList).
+
+get_value(AmiList, Key) ->
+    case lists:keysearch(Key, 1, AmiList) of
+        {ok, {Key, Value}} ->
+            Value;
+        false ->
+            throw({keyerror, Key})
+    end.
+
+set_value(AmiList, Key, Value) ->
+    lists:keystore(Key, 1, AmiList, {Key, Value}).
 
 %% --------------------------------------------------------------------------
 %% @doc
@@ -68,8 +95,8 @@ create_line(LHS, RHS) when is_atom(LHS), is_list(RHS) ->
 %% @end
 %% --------------------------------------------------------------------------
 
-from_lines(Lines) ->
-    lists:reverse(from_lines(Lines, [], "", false)).
+from_lines(ListOfLines) ->
+    lists:reverse(from_lines(ListOfLines, [], "", false)).
 
 
 from_lines([], TupleList, "", _) -> TupleList;
