@@ -1,38 +1,15 @@
-.SUFFIXES: .erl .beam
+all: 
+	cd lib; make
+	cd amisym; make
 
-
-.erl.beam: 
-	erlc -W $<
-
-
-OBJECTS=util.beam \
-		messaging.beam \
-		amilist.beam \
-		protocol.beam \
-		amisym_interp.beam \
-		amisym_session.beam \
-		amisym_server.beam \
-		amisym_sup.beam \
-		amisym.beam
-
-
-TESTS=test_util.beam \
-	  test_messaging.beam \
-	  test_amilist.beam \
-
-
-all: $(OBJECTS)
-	@echo All Done
-
+test: all
+	cd tests; make
 
 clean:
-	rm -f *.beam
-	rm -f erl_crash.dump
+	cd lib; make clean
+	cd amisym; make clean
+	cd tests; make clean
+	rm -rf ebin
 
-
-test: $(OBJECTS) $(TESTS)
-	erl -noshell  -s test_util test -s init stop
-	erl -noshell  -s test_messaging test -s init stop
-	erl -noshell  -s test_amilist test -s init stop
 
 
