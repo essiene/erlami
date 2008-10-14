@@ -14,8 +14,8 @@ OBJECTS= amisym_interp amisym_session \
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
-	@echo All Done
+	@echo AmiSym Ready
 
 clean:
-	rm -f $(EBIN_DIR)/*.beam
-	rm -f $(EBIN_DIR)/erl_crash.dump
+	@rm -f $(EBIN_DIR)/*.beam
+	@rm -f $(EBIN_DIR)/erl_crash.dump

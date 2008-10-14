@@ -13,8 +13,8 @@ OBJECTS=util messaging \
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
-	@echo All Done
+	@echo AMI Library ready
 
 clean:
-	rm -f $(EBIN_DIR)/*.beam
-	rm -f $(EBIN_DIR)/erl_crash.dump
+	@rm -f $(EBIN_DIR)/*.beam
+	@rm -f $(EBIN_DIR)/erl_crash.dump

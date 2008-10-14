@@ -12,13 +12,13 @@ OBJECTS=test_util test_messaging \
 
 
 test: compile
-	erl $(ERL_FLAGS) -noshell -s test_util test -s init stop
-	erl $(ERL_FLAGS) -noshell -s test_amilist test -s init stop
-	erl $(ERL_FLAGS) -noshell -s test_messaging test -s init stop
+	@erl $(ERL_FLAGS) -noshell -s test_util test -s init stop
+	@erl $(ERL_FLAGS) -noshell -s test_amilist test -s init stop
+	@erl $(ERL_FLAGS) -noshell -s test_messaging test -s init stop
 
 compile: ${OBJECTS:%=%.beam}
-	@echo All compiled
+	@echo 
 
 clean:
-	rm -f *.beam
-	rm -f erl_crash.dump
+	@rm -f *.beam
+	@rm -f erl_crash.dump
