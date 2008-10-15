@@ -31,9 +31,11 @@ session(Client, InterpPid, Remainder) ->
             messaging:tcp_send(Client, amilist:to_block(Response)),
             session(Client, InterpPid, Remainder);
         {tcp_closed, Client} ->
-            gen_tcp:close(Client);
-        {tcp_error, Client, _Reason} ->
-            gen_tcp:close(Client);
+            gen_tcp:close(Client),
+            exit(InterpPid, {tcp_closed, Client});
+        {tcp_error, Client, Reason} ->
+            gen_tcp:close(Client),
+            exit(InterpPid, {tcp_error, Client, Reason});
         {tcp, Client, Data} ->
             NewData = string:concat(Remainder, Data),
             {BlockList, NewRemainder} = messaging:get_blocks(NewData, "\r\n\r\n"),

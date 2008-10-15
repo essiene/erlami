@@ -5,6 +5,9 @@ all:
 test: all
 	@cd tests; make
 
+runsym: all
+	@cd amisym; make run
+
 clean:
 	@cd lib; make clean
 	@cd amisym; make clean

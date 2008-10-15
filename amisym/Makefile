@@ -10,11 +10,14 @@ $(EBIN_DIR)/%.beam:  %.erl
 
 OBJECTS= amisym_interp amisym_session \
 		amisym_server amisym_sup \
-		amisym
+		amisym_commands amisym
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
 	@echo AmiSym Ready
+
+run: all
+	erl -pa $(EBIN_DIR) -s amisym start 
 
 clean:
 	@rm -f $(EBIN_DIR)/*.beam

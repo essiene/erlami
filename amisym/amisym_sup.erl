@@ -11,7 +11,14 @@ start() ->
     start(15038).
 
 start(Port) ->
-    register(?SYM_REG_NAME, spawn(?MODULE, init, [Port])).
+    case whereis(?SYM_REG_NAME) of
+        undefined -> 
+            register(?SYM_REG_NAME, spawn(?MODULE, init, [Port])),
+            {ok, started};
+        _ ->
+            {ok, already_running}
+    end.
+
 
 init(Port) ->
     supervise(Port).

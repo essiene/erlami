@@ -16,46 +16,39 @@ start(SessionPid) ->
 
 state_not_logged_in(SessionPid) ->
     receive
+        {SessionPid, {cmd, exit}} ->
+            do_nothing;
         {SessionPid, [{action, "login"} | _Rest] = Command} ->
-            case login(Command) of
+            case amisym_commands:login(Command, false) of
                 {ok, Response} ->
-                    SessionPid ! {self(), Response},
+                    send_response(Command, Response, SessionPid),
                     state_logged_in(SessionPid);
                 {error, Response} ->
-                    SessionPid ! {self(), Response},
+                    send_response(Command, Response, SessionPid),
                     state_not_logged_in(SessionPid)
             end;
-        _Other ->
-            SessionPid ! {self(), [{response, "Error"}, {message, "Not Logged In"}]},
+        {SessionPid, Command} ->
+            send_response(Command, amisym_commands:not_logged_in(Command, false), SessionPid),
             state_not_logged_in(SessionPid)
     end.
 
 state_logged_in(SessionPid) ->
     receive 
-        {SessionPid, [{action, "login"} | _Rest]} ->
-            SessionPid ! {self(), [{response, "Success"}, {message, "Already Logged In"}]},
-            state_logged_in(SessionPid);
-        {SessionPid, [{action, "command"}, {'command', "core show version"} | _Rest] = Command} ->
-            SessionPid ! {self(), command_core_show_version(Command)},
+        {SessionPid, {cmd, exit}} ->
+            do_nothing;
+        {SessionPid, [{action, "logout"} | _Rest] = Command} ->
+            send_response(Command, amisym_commands:logout(Command, true), SessionPid),
+            state_not_logged_in(SessionPid);
+        {SessionPid, [{action, Action} | _Rest] = Command} ->
+            send_response(Command, apply(amisym_commands, Action, [Command, true]), SessionPid),
             state_logged_in(SessionPid)
     end.
 
-
-login(Command) ->
-    Username = amilist:get_value(Command, username),
-    Secret = amilist:get_value(Command, secret),
-    if
-        Username =:= "sym" ->
-            if 
-                Secret =:= "sym" ->
-                    {ok, [{response, "Success"}, {message, "Authentication Successfull"}]}; 
-                true -> 
-                    {error, [{response, "Error"}, {message, "Authentication Failed"}]} 
-            end;
-        true ->
-            {error, [{response, "Error"}, {message, "Authentication Failed"}]}
+send_response(Command, Response, SessionPid) ->
+    case amilist:get_value(Command, actionid) of
+        {keyerror, _Key} ->
+            SessionPid ! {self(), Response};
+        ActionId ->
+            Response1 = amilist:set_value(Response, actionid, ActionId),
+            SessionPid ! {self(), Response1}
     end.
-
-command_core_show_version(Command) ->
-    ActionId = amilist:get_value(Command, actionid),
-    [{response, "Success"}, {message, "AMISym 0.1"}, {actionid, ActionId}].
