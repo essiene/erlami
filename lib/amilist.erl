@@ -87,7 +87,7 @@ get_value(AmiList, Key) ->
         {value, {Key, Value}} ->
             Value;
         false ->
-            throw({keyerror, Key})
+            {keyerror, Key}
     end.
 
 set_value(AmiList, Key, Value) ->
