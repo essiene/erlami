@@ -10,7 +10,7 @@ $(EBIN_DIR)/%.beam:  %.erl
 
 OBJECTS= amisym_interp amisym_session \
 		amisym_server amisym_sup \
-		amisym_commands amisym
+		amisym_actions amisym
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}

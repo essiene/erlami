@@ -1,15 +1,15 @@
--module(amisym_commands).
+-module(amisym_actions).
 -export([
-        login/2,
-        logout/2,
-        not_logged_in/2,
-        command/2
+        a_login/2,
+        a_logout/2,
+        a_not_logged_in/2,
+        a_command/2
     ]).
 
 
-login(_Command, true) ->
+a_login(_Command, true) ->
     [{response, "Success"}, {message, "Already logged in"}];
-login(Command, false) ->
+a_login(Command, false) ->
     Username = amilist:get_value(Command, username),
     Secret = amilist:get_value(Command, secret),
     if
@@ -24,12 +24,11 @@ login(Command, false) ->
             {error, [{response, "Error"}, {message, "Authentication Failed"}]}
     end.
 
-logout(_Command, true) ->
+a_logout(_Command, true) ->
     [{response, "Success"}, {message, "Logged out"}].
 
-not_logged_in(_Command, _) ->
+a_not_logged_in(_Command, _) ->
     [{resonse, "Error"}, {message, "Not logged in"}].
 
-command(Command, true) ->
-    ActionId = amilist:get_value(Command, actionid),
-    [{response, "Success"}, {message, "AMISym 0.1"}, {actionid, ActionId}].
+a_command(Command, true) ->
+    [{response, "Success"}, {message, "AMISym 0.1"}].
