@@ -49,12 +49,20 @@
 
 
 to_block(ListOfTuples) ->
-    to_block(ListOfTuples, "").
+    to_block(ListOfTuples, "", "").
 
-to_block([{Key, Value} | T], Command) ->
-    to_block(T, string:concat(Command, create_line(Key, Value)));
-to_block([], Command) ->
-    string:concat(Command, "\r\n").
+to_block([{Value} | T], Command, Payload) when is_list(Value) ->
+    NewPayload = string:concat(Payload, string:concat(Value, "\r\n")),
+    to_block(T, Command, NewPayload);
+to_block([{Key, Value} | T], Command, Payload) ->
+    to_block(T, string:concat(Command, create_line(Key, Value)), Payload);
+to_block([], Command, "") ->
+    string:concat(Command, "\r\n");
+to_block([], Command, Payload) ->
+    C1 = string:concat(Command, Payload),
+    C2 = string:concat(C1, "--END COMMAND--\r\n"),
+    string:concat(C2, "\r\n").
+
 
 %% ---------------------------------------------------------------------------
 %% @doc

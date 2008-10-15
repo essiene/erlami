@@ -30,5 +30,5 @@ a_logout(_Command, true) ->
 a_not_logged_in(_Command, _) ->
     [{resonse, "Error"}, {message, "Not logged in"}].
 
-a_command(Command, true) ->
+a_command(_Command, true) ->
     [{response, "Success"}, {message, "AMISym 0.1"}].
