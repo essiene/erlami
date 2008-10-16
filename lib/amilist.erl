@@ -1,10 +1,13 @@
 -module(amilist).
 -export([
         new/0,
-        has_key/2,
-        has_value/2,
+        set_value/3,
         get_value/2,
-        set_value/3
+        has_value/2,
+        has_key/2,
+        set_payload/2,
+        get_payload/1,
+        has_payload/1
     ]).
 
 
@@ -53,11 +56,8 @@
 new() ->
     [].
 
-has_key(AmiList, Key) ->
-    lists:keymember(Key, 1, AmiList).
-
-has_value(AmiList, Value) ->
-    lists:keymember(Value, 2, AmiList).
+set_value(AmiList, Key, Value) ->
+    lists:keystore(Key, 1, AmiList, {Key, Value}).
 
 get_value(AmiList, Key) ->
     case lists:keysearch(Key, 1, AmiList) of
@@ -67,7 +67,33 @@ get_value(AmiList, Key) ->
             {keyerror, Key}
     end.
 
-set_value(AmiList, Key, Value) ->
-    lists:keystore(Key, 1, AmiList, {Key, Value}).
+has_value(AmiList, Value) ->
+    lists:keymember(Value, 2, AmiList).
 
 
+
+has_key(AmiList, Key) ->
+    lists:keymember(Key, 1, AmiList).
+
+
+set_payload(AmiList, Payload) ->
+    set_payload(AmiList, [], Payload).
+
+set_payload([], NewAmiList, Payload) ->
+    lists:reverse([Payload | NewAmiList]);
+set_payload([{Key, Value} | Rest], NewAmiList, Payload) ->
+    set_payload(Rest, [{Key, Value} | NewAmiList], Payload);
+set_payload([{_OldPayload} | Rest], NewAmiList, Payload) ->
+    set_payload(Rest, NewAmiList, Payload).
+
+get_payload([{_Key, _Value} | Rest]) ->
+    get_payload(Rest);
+get_payload([{Payload} | _Rest]) ->
+    Payload.
+
+has_payload([]) ->
+    false;
+has_payload([{_Key, _Value} | Rest]) ->
+    has_payload(Rest);
+has_payload([{_Payload} | _Rest]) ->
+    true.
