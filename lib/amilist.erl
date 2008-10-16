@@ -1,8 +1,5 @@
 -module(amilist).
 -export([
-        to_block/1,
-        from_lines/1,
-        from_block/1,
         new/0,
         has_key/2,
         has_value/2,
@@ -13,12 +10,14 @@
 
 %% ==========================================================================
 %%
-%% amilists are Key Value lists which used for messaging throughout the library.
-%% The are protocol aware.
+%% Amilists are Key Value lists with one optional keyless value called the
+%% 'payload'.  Amilists are used for messaging throughout the library.
+%%
+%% They are protocol aware.
 %% A amilist is really a 2 tuple list of the form:
 %%    [{Key1, Value1} | Rest]
 %%
-%% This structure is mapped one-to-one to the AMI message format which looks
+%% This structure is mapped one-to-one to the AMI Message Block format which looks
 %% like:
 %%
 %%    Key1: Value1\r\n
@@ -27,13 +26,21 @@
 %%    KeyN: ValueN\r\n
 %%    Optional payload without Key-Value mapping \r\n
 %%    that can spawn multiple lines and ends with
-%%    --END COMMAND--\r\n
 %%    \r\n
 %% 
 %%  Because they are protocol aware, each time we meet an optional
-%%  multiline payload, we read it as if it had been a:
+%%  multiline payload, we read it into a keyless value
+%%  and the end result becomes:
 %%
-%%     Message: Multiline Values
+%%  [
+%%      {key1, "value1"},
+%%      {key2, "value2"},
+%%      ...
+%%      {keyN, "valueN"},
+%%      {"This particular tuple entry\r\n
+%%        is completely optional\r\n"
+%%      }
+%%  ]
 %%
 %% This helps to keep the protocol consistent on the library end and obsoletes the
 %% need for special case hacks.
@@ -41,44 +48,6 @@
 %% ==========================================================================
 
 
-%% ---------------------------------------------------------------------------
-%% @doc
-%% @spec to_block(ListOfTuples) -> AMIBlock
-%% @end doc
-%% ---------------------------------------------------------------------------
-
-
-to_block(ListOfTuples) ->
-    to_block(ListOfTuples, "", "").
-
-to_block([{Value} | T], Command, Payload) when is_list(Value) ->
-    NewPayload = string:concat(Payload, string:concat(Value, "\r\n")),
-    to_block(T, Command, NewPayload);
-to_block([{Key, Value} | T], Command, Payload) ->
-    to_block(T, string:concat(Command, create_line(Key, Value)), Payload);
-to_block([], Command, "") ->
-    string:concat(Command, "\r\n");
-to_block([], Command, Payload) ->
-    C1 = string:concat(Command, Payload),
-    C2 = string:concat(C1, "--END COMMAND--\r\n"),
-    string:concat(C2, "\r\n").
-
-
-%% ---------------------------------------------------------------------------
-%% @doc
-%% @spec create_line(lhs, RHS) -> "LHS: RHS\r\n"
-%% @end
-%% ---------------------------------------------------------------------------
-
-create_line(LHS, RHS) when is_atom(LHS), is_list(RHS) ->
-    S1 = string:concat(string:to_upper(atom_to_list(LHS)), ": "),
-    S2 = string:concat(S1, RHS),
-    string:concat(S2, "\r\n").
-
-from_block(Block) ->
-    Stripped = util:strip(Block),
-    ListOfLines = string:tokens(Stripped, "\r\n"),
-    from_lines(ListOfLines).
 
 
 new() ->
@@ -101,41 +70,4 @@ get_value(AmiList, Key) ->
 set_value(AmiList, Key, Value) ->
     lists:keystore(Key, 1, AmiList, {Key, Value}).
 
-%% --------------------------------------------------------------------------
-%% @doc
-%% @spec from_lines(ListOfLines) -> ListOfTuples
-%% @end
-%% --------------------------------------------------------------------------
 
-from_lines(ListOfLines) ->
-    lists:reverse(from_lines(ListOfLines, [], "", false)).
-
-
-from_lines([], TupleList, "", _) -> TupleList;
-from_lines([], TupleList, ExtraMessage, _) -> [{message, util:strip(ExtraMessage)} | TupleList]; 
-from_lines([H | T], TupleList, ExtraMessage, GrabExtraFlag) ->
-        case GrabExtraFlag of
-            true ->
-                NewExtraMessage = string:concat(ExtraMessage, H),
-                from_lines(T, TupleList, NewExtraMessage, true);
-            false ->
-                StrippedLine = util:strip(H),
-                case string:chr(StrippedLine, 32) of
-                    0 -> 
-                        NewExtraMessage = string:concat(ExtraMessage, H),
-                        from_lines(T, TupleList, NewExtraMessage, true);
-                    _ ->
-                        [KeyWithColon | Rest] = string:tokens(StrippedLine, " "),
-                        case string:chr(KeyWithColon, $:) of
-                            0 -> 
-                                NewExtraMessage = string:concat(ExtraMessage, H),
-                                from_lines(T, TupleList, NewExtraMessage, true);
-                            _ColonIndex ->
-                                [Key] = string:tokens(KeyWithColon, ":"),
-                                LowerCaseKey = string:to_lower(Key),
-                                AtomKey = list_to_atom(LowerCaseKey),
-                                Value = string:join(Rest, " "),
-                                from_lines(T, [{AtomKey, Value} | TupleList], ExtraMessage, false)
-                        end
-                end
-        end.

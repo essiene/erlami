@@ -7,7 +7,6 @@
         strip/1,
         append_mark/1,
         remove_mark/1,
-        get_seperated_blocks_and_incomplete/1,
         logmessage/1
     ]).
 
@@ -112,30 +111,6 @@ remove_mark(MarkedString) ->
 
 
 
-%% ---------------------------------------------------------------------
-%% @doc
-%% @spec get_seperated_blocks_and_incomplete(RawListOfBlocks) ->
-%%          {ListOfCompleteBlocks, IncompleteBlockString}
-%% @end
-%% ---------------------------------------------------------------------
-
-get_seperated_blocks_and_incomplete(RawListOfString) ->
-    {ListOfStrings, Incomplete} = get_seperated_blocks_and_incomplete(RawListOfString, ?MARK, []),
-    {lists:reverse(ListOfStrings), Incomplete}.
-
-get_seperated_blocks_and_incomplete([], _Mark, Accm) ->
-    {Accm, ""};
-get_seperated_blocks_and_incomplete([LastBlock], Mark, Accm) ->
-    % implement util:startwith(String, Check)
-    % and util:endswith(String, Check)
-    case string:str(LastBlock, Mark) of
-        0 ->
-            {[LastBlock | Accm], ""};
-        _ ->
-            {Accm, remove_mark(LastBlock)}
-    end;
-get_seperated_blocks_and_incomplete([H | T], Mark, Accm) ->
-    get_seperated_blocks_and_incomplete(T, Mark, [H | Accm]).
 
 
 %% -------------------------------------------------------------------

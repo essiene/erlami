@@ -7,8 +7,8 @@ ERL_FLAGS= -pa $(EBIN_DIR) -I $(INCLUDE_DIR) -W
 	erlc $(ERL_FLAGS) $<
 
 
-OBJECTS=test_util test_messaging \
-	  test_amilist
+OBJECTS=test_util test_amilist \
+		test_messaging 
 
 
 test: compile
