@@ -21,6 +21,7 @@ start(Port) ->
 
 
 init(Port) ->
+    process_flag(trap_exit, true),
     supervise(Port).
 
 supervise(Port) ->

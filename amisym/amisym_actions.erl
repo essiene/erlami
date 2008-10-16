@@ -1,11 +1,24 @@
 -module(amisym_actions).
 -export([
+        action/3,
         a_login/2,
         a_logout/2,
         a_not_logged_in/2,
         a_command/2
     ]).
+-include("ami.hrl").
 
+
+
+
+action(Action, Command, IsLoggedIn) ->
+    try
+        Function = list_to_atom(?SYM_ACTION_FUNCTION_PREFIX ++ Action),
+        apply(?MODULE, Function, [Command, IsLoggedIn])
+    catch
+        error: undef->
+            [{response, "Error"}, {message, "No such action"}]
+    end.
 
 a_login(_Command, true) ->
     [{response, "Success"}, {message, "Already logged in"}];

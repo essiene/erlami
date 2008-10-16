@@ -3,7 +3,7 @@
         start/0,
         start/1,
         new/1,
-        serve/1
+        init/1
     ]).
 -include("ami.hrl").
 
@@ -13,8 +13,7 @@ start() ->
 
 start(Port) ->
     Server = new(Port),
-    process_flag(trap_exit, true),
-    spawn_link(amisym_server, serve, [Server]).
+    spawn_link(amisym_server, init, [Server]).
 
 
 new(Port) ->
@@ -24,6 +23,10 @@ new(Port) ->
         {error, Reason} ->
             throw({new, Reason})
     end.
+
+init(ListenSocket) ->
+    process_flag(trap_exit, true),
+    serve(ListenSocket).
 
 serve(ListenSocket) ->
     case gen_tcp:accept(ListenSocket) of

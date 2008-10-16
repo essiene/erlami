@@ -5,7 +5,6 @@
         state_logged_in/1,
         send/3
     ]).
--include("ami.hrl").
 
 
 send(InterpPid, SessionPid, AmiList) ->
@@ -17,6 +16,8 @@ start(SessionPid) ->
 
 state_not_logged_in(SessionPid) ->
     receive
+        {SessionPid, {cmd, change_state}} ->
+            state_logged_in(SessionPid);
         {SessionPid, {cmd, exit}} ->
             do_nothing;
         {SessionPid, [{action, "login"} | _Rest] = Command} ->
@@ -30,6 +31,8 @@ state_not_logged_in(SessionPid) ->
             end;
         {SessionPid, Command} ->
             send_response(Command, amisym_actions:a_not_logged_in(Command, false), SessionPid),
+            state_not_logged_in(SessionPid);
+        _Any ->
             state_not_logged_in(SessionPid)
     end.
 
@@ -41,7 +44,10 @@ state_logged_in(SessionPid) ->
             send_response(Command, amisym_actions:a_logout(Command, true), SessionPid),
             state_not_logged_in(SessionPid);
         {SessionPid, [{action, Action} | _Rest] = Command} ->
-            send_response(Command, apply(amisym_actions, list_to_atom(?SYM_ACTION_FUNCTION_PREFIX ++ Action), [Command, true]), SessionPid),
+            Response = amisym_actions:action(Action, Command, true),
+            send_response(Command, Response, SessionPid),
+            state_logged_in(SessionPid);
+        _Any ->
             state_logged_in(SessionPid)
     end.
 
