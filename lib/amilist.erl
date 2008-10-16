@@ -64,13 +64,11 @@ get_value(AmiList, Key) ->
         {value, {Key, Value}} ->
             Value;
         false ->
-            {keyerror, Key}
+            {error, {no_key, Key}}
     end.
 
 has_value(AmiList, Value) ->
     lists:keymember(Value, 2, AmiList).
-
-
 
 has_key(AmiList, Key) ->
     lists:keymember(Key, 1, AmiList).
@@ -80,12 +78,14 @@ set_payload(AmiList, Payload) ->
     set_payload(AmiList, [], Payload).
 
 set_payload([], NewAmiList, Payload) ->
-    lists:reverse([Payload | NewAmiList]);
+    lists:reverse([{Payload} | NewAmiList]);
 set_payload([{Key, Value} | Rest], NewAmiList, Payload) ->
     set_payload(Rest, [{Key, Value} | NewAmiList], Payload);
 set_payload([{_OldPayload} | Rest], NewAmiList, Payload) ->
     set_payload(Rest, NewAmiList, Payload).
 
+get_payload([]) ->
+    {error, no_payload};
 get_payload([{_Key, _Value} | Rest]) ->
     get_payload(Rest);
 get_payload([{Payload} | _Rest]) ->

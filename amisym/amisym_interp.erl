@@ -53,7 +53,7 @@ state_logged_in(SessionPid) ->
 
 send_response(Command, Response, SessionPid) ->
     case amilist:get_value(Command, actionid) of
-        {keyerror, _Key} ->
+        {error, {no_key, _Key}} ->
             SessionPid ! {self(), Response};
         ActionId ->
             Response1 = amilist:set_value(Response, actionid, ActionId),
