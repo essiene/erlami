@@ -196,3 +196,24 @@ symmetry_multiple_pair_multiline_payload1_test() ->
     Block = "KEY1: Value one\r\nKEY2: Value two\r\nKEY3: Value three\r\nPayload line1\r\nPayload line2\r\nPayload line3\r\n\r\n",
     ?assertEqual(Block, messaging:amilist_to_block(messaging:block_to_amilist(Block))).
 
+
+
+lineslist_to_amilist_no_lines_test() ->
+    ?assertEqual([], messaging:lineslist_to_amilist([])).
+
+lineslist_to_amilist_no_payload_test() ->
+    % Note that the space b/w Key: and Value is expected as part of the protocol
+    % eventually we should use yecc or something to make a more forgiving grammar
+    Lines = ["Key1: Value1\r\n", "Key2: A longer Value2\r\n", "Key3: Value3\r\n"],
+    AmiList = [{key1, "Value1"}, {key2, "A longer Value2"}, {key3, "Value3"}],
+    ?assertEqual(AmiList, messaging:lineslist_to_amilist(Lines)).
+
+lineslist_to_amilist_single_line_payload_test() ->
+    Lines = ["Key1: Value1\r\n", "Key2: A longer Value2\r\n", "--END COMMAND--\r\n"],
+    AmiList = [{key1, "Value1"}, {key2, "A longer Value2"}, {"--END COMMAND--"}],
+    ?assertEqual(AmiList, messaging:lineslist_to_amilist(Lines)).
+
+lineslist_to_amilist_multi_line_payload_test() ->
+    Lines = ["Key1: Value1\r\n", "Key2: A longer Value2\r\n", "Line one\r\nLine two\r\n--END COMMAND--\r\n"],
+    AmiList = [{key1, "Value1"}, {key2, "A longer Value2"}, {"Line one\r\nLine two\r\n--END COMMAND--"}],
+    ?assertEqual(AmiList, messaging:lineslist_to_amilist(Lines)).

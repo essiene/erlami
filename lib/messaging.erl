@@ -6,6 +6,10 @@
         block_to_amilist/1,
         send/2
     ]).
+
+-export([
+        lineslist_to_amilist/1
+    ]).
 -include("ami.hrl").
 
 %% ====================================================================
@@ -93,7 +97,7 @@ amilist_to_block([], Block, Payload) ->
 block_to_amilist(Block) ->
     Stripped = util:strip(Block),
     ListOfLines = string:tokens(Stripped, "\r\n"),
-    lists:reverse(lineslist_to_amilist(ListOfLines, [], "", false)).
+    lineslist_to_amilist(ListOfLines).
 
 
 send(Socket, Data) ->
@@ -112,6 +116,9 @@ send(Socket, Data) ->
 %% @spec lineslist_to_amilist(ListOfLines, AMIListAccumulator, Payload, GrabPayloadFlag) -> AMIList
 %% @end
 %% --------------------------------------------------------------------------
+
+lineslist_to_amilist(ListOfLines) ->
+    lists:reverse(lineslist_to_amilist(ListOfLines, [], "", false)).
 
 lineslist_to_amilist([], AMIList, "", _) -> AMIList;
 lineslist_to_amilist([], AMIList, Payload, _) -> [{util:strip(Payload)} | AMIList]; 
