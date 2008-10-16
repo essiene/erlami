@@ -1,7 +1,13 @@
 - Consider dumping the Dict() and using TupleLists with
   keyX functions from lists module
 - Implement Event processor, first for Channel handling for Originate
-- amilist:from_block and amilist:to_block are not perfectly symmetrical
-  Currently, to_block does not handle the EXTRA PAYLOAD that normally goes
-  with Response: Follows and ends with --END COMMAND--. This has to be
-  a mirror of the process in from_block.
+- amilist_to_block/4 and lineslist_to_amilist should be mirror images
+  as much as possible. Now lineslist_to_amilist is too complex with 
+  a lot of violations of the SPOT rule. also the logic can
+  be confusing. Consider writing a function to detect if a line starts
+  with a single word followed by a colon, and use that for filtering the
+  payload out
+- Consider moving amisym_session:async_send_blocks, into the interpreter
+  as amisym_interp:interpret_block.
+- also, consider making the session/interpreter into a standalone framework that
+  can be potentially reused in the client.
