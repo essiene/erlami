@@ -3,7 +3,7 @@
         start/0,
         start/1,
         new/1,
-        init/1
+        listen/1
     ]).
 -include("ami.hrl").
 
@@ -13,7 +13,7 @@ start() ->
 
 start(Port) ->
     Server = new(Port),
-    spawn_link(amisym_server, init, [Server]).
+    spawn_link(?MODULE, listen, [Server]).
 
 
 new(Port) ->
@@ -24,22 +24,13 @@ new(Port) ->
             throw({new, Reason})
     end.
 
-init(ListenSocket) ->
+listen(ListenSocket) ->
     process_flag(trap_exit, true),
     serve(ListenSocket).
 
+
 serve(ListenSocket) ->
-    case gen_tcp:accept(ListenSocket) of
-        {error, Reason} ->
-            throw({accept, Reason});
-        {ok, Client} ->
-            SessionPid = amisym_session:create(Client, self()),
-            case gen_tcp:controlling_process(Client, SessionPid) of
-                {error, Reason} ->
-                    util:logmessage({error, Reason}),
-                    exit(SessionPid, kill);
-                ok ->
-                    amisym_session:start(SessionPid)
-            end,
-            serve(ListenSocket)
-    end.
+    {ok, Client} = gen_tcp:accept(ListenSocket),
+    SessionPid = amisym_session:new(Client),
+    gen_tcp:controlling_process(Client, SessionPid),
+    serve(ListenSocket).

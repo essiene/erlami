@@ -1,17 +1,16 @@
 -module(amisym_interp).
 -export([
-        start/1,
+        new/1,
         state_not_logged_in/1,
         state_logged_in/1,
-        send/3
+        interpret_blocks/3,
+        interpret_blocks/4
     ]).
 
 
-send(InterpPid, SessionPid, AmiList) ->
-    InterpPid ! {SessionPid, AmiList}.
 
 
-start(SessionPid) ->
+new(SessionPid) ->
     spawn_link(?MODULE, state_not_logged_in, [SessionPid]).
 
 state_not_logged_in(SessionPid) ->
@@ -59,3 +58,25 @@ send_response(Command, Response, SessionPid) ->
             Response1 = amilist:set_value(Response, actionid, ActionId),
             SessionPid ! {self(), Response1}
     end.
+
+
+interpret_blocks(Interp, ListOfBlocks, SessionPid) ->
+    spawn(?MODULE, interpret_blocks, [Interp, ListOfBlocks, SessionPid, dummy]).
+
+interpret_blocks(_Interp, [], _SessionPid, dummy) -> 
+    true;
+interpret_blocks(Interp, [Block | Rest], SessionPid, dummy) ->
+    AmiList = messaging:block_to_amilist(Block),
+    case amilist:has_key(AmiList, action) of
+        true ->
+            interpret_amilist(Interp, AmiList, SessionPid);
+        false ->
+            util:logmessage("****Invalid Message****"),
+            util:logmessage(AmiList),
+            util:logmessage("***********************")
+    end,
+    interpret_blocks(Interp, Rest, SessionPid, dummy).
+
+
+interpret_amilist(Interp, AmiList, SessionPid) ->
+    Interp ! {SessionPid, AmiList}.

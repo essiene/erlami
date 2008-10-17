@@ -25,8 +25,8 @@ init(Port) ->
     supervise(Port).
 
 supervise(Port) ->
-    ServerPid = amisym_server:start(Port),
-    loop(Port, ServerPid).
+    amisym_server:start(Port),
+    loop(Port, none).
 
 
 loop(Port, ServerPid) ->

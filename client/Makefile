@@ -8,12 +8,11 @@ $(EBIN_DIR)/%.beam:  %.erl
 	erlc $(ERL_FLAGS) $<
 
 
-OBJECTS=util messaging \
-		amilist protocol
+OBJECTS= 
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
-	@echo AMI Core Library ready
+	@echo Ami Client Library Ready
 
 clean:
 	@rm -f $(EBIN_DIR)/*.beam

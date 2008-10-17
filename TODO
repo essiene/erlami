@@ -7,7 +7,5 @@
   be confusing. Consider writing a function to detect if a line starts
   with a single word followed by a colon, and use that for filtering the
   payload out
-- Consider moving amisym_session:async_send_blocks, into the interpreter
-  as amisym_interp:interpret_block.
 - also, consider making the session/interpreter into a standalone framework that
-  can be potentially reused in the client.
+  can be potentially reused in the client. (Started refactoring this part)
