@@ -1,10 +1,9 @@
 -module(messaging).
 -export([
-        get_blocks/2,
         get_blocks/1,
+        get_blocks/2,
         amilist_to_block/1, 
-        block_to_amilist/1,
-        send/2
+        block_to_amilist/1
     ]).
 
 -export([
@@ -42,14 +41,19 @@
 %% @end
 %% --------------------------------------------------------------------
 
+get_blocks(RawString) ->
+    BlockSeperator = "\r\n\r\n",
+    MarkedString = util:append_mark(RawString),
+    RawListOfBlocks = util:split(MarkedString, BlockSeperator),
+    get_blocks(RawListOfBlocks, list_of_strings).
+
+get_blocks(RawListOfString, list_of_strings) ->
+    {ListOfStrings, Incomplete} = get_blocks(RawListOfString, ?MARK, []),
+    {lists:reverse(ListOfStrings), Incomplete};
 get_blocks(RawString, BlockSeperator) ->
     MarkedString = util:append_mark(RawString),
     RawListOfBlocks = util:split(MarkedString, BlockSeperator),
-    get_blocks(RawListOfBlocks).
-
-get_blocks(RawListOfString) ->
-    {ListOfStrings, Incomplete} = get_blocks(RawListOfString, ?MARK, []),
-    {lists:reverse(ListOfStrings), Incomplete}.
+    get_blocks(RawListOfBlocks, list_of_strings).
 
 get_blocks([], _Mark, BlockList) ->
     {BlockList, ""};
@@ -100,17 +104,6 @@ block_to_amilist(Block) ->
     lineslist_to_amilist(ListOfLines).
 
 
-send(Socket, Data) ->
-    case gen_tcp:send(Socket, Data) of
-        {error, Reason} ->
-            throw({send, Reason});
-        ok ->
-            {ok, Data}
-    end.
-
-
-
-
 %% --------------------------------------------------------------------------
 %% @doc
 %% @spec lineslist_to_amilist(ListOfLines, AMIListAccumulator, Payload, GrabPayloadFlag) -> AMIList
@@ -156,6 +149,8 @@ lineslist_to_amilist([H | T], AMIList, Payload, GrabPayloadFlag) ->
 %% @end
 %% ---------------------------------------------------------------------------
 
+create_line(LHS, RHS) when is_atom(LHS), is_integer(RHS) ->
+    create_line(LHS, integer_to_list(RHS));
 create_line(LHS, RHS) when is_atom(LHS), is_list(RHS) ->
     S1 = string:concat(string:to_upper(atom_to_list(LHS)), ": "),
     S2 = string:concat(S1, RHS),

@@ -6,11 +6,12 @@
 -include("ami.hrl").
 
 new(Client) ->
-    spawn_link(?MODULE, init, [Client]).
+    SessionPid = spawn_link(?MODULE, init, [Client]),
+    amitcp:set_controlling_process(Client, SessionPid).
 
 init(Client) ->
     send_banner(Client, ?SYM_BANNER, ?SYM_VERSION),
-    Interp = amisym_interp:new(self()),
+    Interp = amisym_interp:new(),
     process_flag(trap_exit, true),
     session(Client, Interp, "").
 
@@ -22,7 +23,7 @@ session(Client, Interp, Remainder) ->
             NewInterPid ! {self(), {cmd, change_state}},
             session(Client, NewInterPid, Remainder);
         {Interp, Response} ->
-            messaging:send(Client, messaging:amilist_to_block(Response)),
+            amitcp:send(Client, Response),
             session(Client, Interp, Remainder);
         {tcp_closed, Client} ->
             gen_tcp:close(Client),
@@ -32,16 +33,15 @@ session(Client, Interp, Remainder) ->
             exit(Interp, {tcp_error, Client, Reason});
         {tcp, Client, Data} ->
             NewData = string:concat(Remainder, Data),
-            {BlockList, NewRemainder} = messaging:get_blocks(NewData, "\r\n\r\n"),
-            amisym_interp:interpret_blocks(Interp, BlockList, self()),
+            {BlockList, NewRemainder} = messaging:get_blocks(NewData),
+            interp:interpret_blocks(Interp, BlockList),
             session(Client, Interp, NewRemainder);
         _Any ->
             session(Client, Interp, Remainder)
-            
     end.
 
 
 send_banner(Client, Id, Version) ->
     Banner = string:join([Id, Version], "/"),
     Line = string:concat(Banner, "\r\n"),
-    messaging:send(Client, Line).
+    amitcp:send(Client, Line, raw).

@@ -8,13 +8,18 @@ ERL_FLAGS= -pa $(EBIN_DIR) -I $(INCLUDE_DIR) -W
 
 
 OBJECTS=test_util test_amilist \
-		test_messaging 
+		test_messaging  \
+		test_amisym test_ami
 
 
 test: compile
 	erl $(ERL_FLAGS) -noshell -s test_util test -s init stop
 	erl $(ERL_FLAGS) -noshell -s test_amilist test -s init stop
 	erl $(ERL_FLAGS) -noshell -s test_messaging test -s init stop
+
+	erl $(ERL_FLAGS) -noshell -s test_amisym test -s init stop
+	erl $(ERL_FLAGS) -noshell -s test_ami test -s init stop
+
 
 compile: ${OBJECTS:%=%.beam}
 	@echo 

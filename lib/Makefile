@@ -8,8 +8,9 @@ $(EBIN_DIR)/%.beam:  %.erl
 	erlc $(ERL_FLAGS) $<
 
 
-OBJECTS=util messaging \
-		amilist protocol
+OBJECTS=util amilist \
+		messaging amitcp \
+		interp
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}

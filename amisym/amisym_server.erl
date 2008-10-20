@@ -2,35 +2,30 @@
 -export([
         start/0,
         start/1,
-        new/1,
-        listen/1
+        init/1,
+        serve/1
     ]).
--include("ami.hrl").
 
 
 start() ->
     start(15038).
 
 start(Port) ->
-    Server = new(Port),
-    spawn_link(?MODULE, listen, [Server]).
+    Server = amitcp:create_server(Port),
+    spawn_link(?MODULE, init, [Server]).
 
-
-new(Port) ->
-    case gen_tcp:listen(Port, ?SYM_SERVER_OPTION) of
-        {ok, ListenSocket} ->
-            ListenSocket;
-        {error, Reason} ->
-            throw({new, Reason})
-    end.
-
-listen(ListenSocket) ->
+init(Server) ->
     process_flag(trap_exit, true),
-    serve(ListenSocket).
+    serve(Server).
 
-
-serve(ListenSocket) ->
-    {ok, Client} = gen_tcp:accept(ListenSocket),
-    SessionPid = amisym_session:new(Client),
-    gen_tcp:controlling_process(Client, SessionPid),
-    serve(ListenSocket).
+serve(Server) ->
+    try
+        Client = amitcp:wait_for_connection(Server),
+        amisym_session:new(Client),
+        serve(Server)
+    catch
+        Type: Exception ->
+            {Type, Exception}
+    after
+        gen_tcp:close(Server)
+    end.

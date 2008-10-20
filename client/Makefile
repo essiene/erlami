@@ -8,7 +8,8 @@ $(EBIN_DIR)/%.beam:  %.erl
 	erlc $(ERL_FLAGS) $<
 
 
-OBJECTS= 
+OBJECTS= amiclient_session \
+		 amiclient_interp ami
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}

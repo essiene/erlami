@@ -25,23 +25,23 @@ init(Port) ->
     supervise(Port).
 
 supervise(Port) ->
-    amisym_server:start(Port),
-    loop(Port, none).
+    Server = amisym_server:start(Port),
+    loop(Port, Server).
 
 
-loop(Port, ServerPid) ->
+loop(Port, Server) ->
     receive
         {From, ping} ->
-            From ! server_ping(ServerPid),
-            loop(Port, ServerPid);
+            From ! server_ping(Server),
+            loop(Port, Server);
         {From, stop} ->
             From ! {?SYM_REG_NAME, stopping},
-            server_stop(ServerPid);
-        {'EXIT', _Pid, _Reason} ->
+            server_stop(Server);
+        {'EXIT', Server, _Reason} ->
             util:logmessage("Restarting server"),
             supervise(Port);
         _Any ->
-            loop(Port, ServerPid)
+            loop(Port, Server)
     end.
 
 

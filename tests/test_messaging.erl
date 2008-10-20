@@ -11,22 +11,22 @@ get_blocks_no_incomplete_test() ->
 
 
 get_blocks_empty_list_test() ->
-    ?assertEqual({[], ""}, messaging:get_blocks([])).
+    ?assertEqual({[], ""}, messaging:get_blocks([], list_of_strings)).
 
 get_blocks_and_single_test() ->
-    ?assertEqual({["string1"], ""}, messaging:get_blocks(["string1"])).
+    ?assertEqual({["string1"], ""}, messaging:get_blocks(["string1"], list_of_strings)).
 
 get_blocks_and_no_incomplete_test() ->
-    ?assertEqual({["string1", "string2"], ""}, messaging:get_blocks(["string1", "string2"])).
+    ?assertEqual({["string1", "string2"], ""}, messaging:get_blocks(["string1", "string2"], list_of_strings)).
 
 get_blocks_test() ->
-    ?assertEqual({["string1"], "string2"}, messaging:get_blocks(["string1", "string2PROCESSORMARK"])).
+    ?assertEqual({["string1"], "string2"}, messaging:get_blocks(["string1", "string2PROCESSORMARK"], list_of_strings)).
 
 get_blocks_and_multiple_no_incomplete_test() ->
-    ?assertEqual({["string1", "string2", "string3", "string4"], ""}, messaging:get_blocks(["string1", "string2", "string3", "string4"])).
+    ?assertEqual({["string1", "string2", "string3", "string4"], ""}, messaging:get_blocks(["string1", "string2", "string3", "string4"], list_of_strings)).
 
 get_blocks_multiple_and_incomplete_test() ->
-    ?assertEqual({["string1", "string2", "string3"], "string4"}, messaging:get_blocks(["string1", "string2", "string3", "string4PROCESSORMARK"])).
+    ?assertEqual({["string1", "string2", "string3"], "string4"}, messaging:get_blocks(["string1", "string2", "string3", "string4PROCESSORMARK"], list_of_strings)).
 
 
 
@@ -74,6 +74,11 @@ amilist_to_block_multiple_pair_multiline_payload_test() ->
     ],
 
     Block = "KEY1: Value one\r\nKEY2: Value two\r\nKEY3: Value three\r\nPayload line1\r\nPayload line2\r\nPayload line3\r\n\r\n",
+    ?assertEqual(Block, messaging:amilist_to_block(AMIList)).
+
+amilist_to_block_no_payload_contains_integer_value_test() ->
+    AMIList = [{key1, 1}],
+    Block = "KEY1: 1\r\n\r\n",
     ?assertEqual(Block, messaging:amilist_to_block(AMIList)).
 
 
