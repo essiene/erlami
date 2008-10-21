@@ -12,8 +12,8 @@ login_ok_test() ->
     ?assertEqual(true, is_pid(InterpPid)),
     amisym:stop().
 
-interp_working_test() ->
+execute_working_test() ->
     amisym:start(),
-    InterpPid = ami:new("localhost", 15038, "sym", "sym"), 
-    [{response, "Success"} | _Rest] = interp:rpc(InterpPid, [{action, "login"}]),
+    Ami = ami:new("localhost", 15038, "sym", "sym"), 
+    [{response, "Success"} | _Rest] = ami:execute(Ami, [{action, "login"}]),
     amisym:stop().

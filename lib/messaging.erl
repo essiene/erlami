@@ -148,7 +148,8 @@ lineslist_to_amilist([H | T], AMIList, Payload, GrabPayloadFlag) ->
 %% @spec create_line(lhs, RHS) -> "LHS: RHS\r\n"
 %% @end
 %% ---------------------------------------------------------------------------
-
+create_line(LHS, RHS) when is_atom(LHS), is_atom(RHS) ->
+    create_line(LHS, atom_to_list(RHS));
 create_line(LHS, RHS) when is_atom(LHS), is_integer(RHS) ->
     create_line(LHS, integer_to_list(RHS));
 create_line(LHS, RHS) when is_atom(LHS), is_list(RHS) ->

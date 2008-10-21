@@ -80,6 +80,10 @@ amilist_to_block_no_payload_contains_integer_value_test() ->
     AMIList = [{key1, 1}],
     Block = "KEY1: 1\r\n\r\n",
     ?assertEqual(Block, messaging:amilist_to_block(AMIList)).
+amilist_to_block_no_payload_contains_atom_value_test() ->
+    AMIList = [{key1, atomic_value}],
+    Block = "KEY1: atomic_value\r\n\r\n",
+    ?assertEqual(Block, messaging:amilist_to_block(AMIList)).
 
 
 
