@@ -9,7 +9,8 @@ ERL_FLAGS= -pa $(EBIN_DIR) -I $(INCLUDE_DIR) -W
 
 OBJECTS=test_util test_amilist \
 		test_messaging  test_amisym_eventbus \
-		test_amisym test_ami
+		test_amiclient_evtproc test_amisym \
+		test_ami
 
 
 test: compile
@@ -18,6 +19,7 @@ test: compile
 	erl $(ERL_FLAGS) -noshell -s test_messaging test -s init stop
 
 	erl $(ERL_FLAGS) -noshell -s test_amisym_eventbus test -s init stop
+	erl $(ERL_FLAGS) -noshell -s test_amiclient_evtproc test -s init stop
 
 	erl $(ERL_FLAGS) -noshell -s test_amisym test -s init stop
 	erl $(ERL_FLAGS) -noshell -s test_ami test -s init stop

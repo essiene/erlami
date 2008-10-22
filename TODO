@@ -1,4 +1,3 @@
-- Implement Event processor, first for Channel handling for Originate
 - amilist_to_block/4 and lineslist_to_amilist should be mirror images
   as much as possible. Now lineslist_to_amilist is too complex with 
   a lot of violations of the SPOT rule. also the logic can
@@ -7,3 +6,7 @@
   payload out
 - BUG in parsing, when we recieve a Key: without a value, we kick into
   payload mode. fix this. (where the heck is yeck :P)
+- Try to encapsulate all uses of ets, so we can hide it properly and 
+  potentialy swap it out. See all the state machines (amiclient_interp, etc).
+
+  And not just ets, but lots of other low-level modules
