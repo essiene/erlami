@@ -1,7 +1,9 @@
 -module(amisym_session).
 -export([
         new/1,
-        init/1
+        init/1,
+        send_response/3,
+        send_event/2
     ]).
 -include("ami.hrl").
 
@@ -22,8 +24,8 @@ session(Client, Interp, Remainder) ->
             NewInterPid = amisym_interp:new(self()),
             NewInterPid ! {self(), {cmd, change_state}},
             session(Client, NewInterPid, Remainder);
-        {Interp, Response} ->
-            amitcp:send(Client, Response),
+        {Interp, Message} ->
+            amitcp:send(Client, Message),
             session(Client, Interp, Remainder);
         {tcp_closed, Client} ->
             gen_tcp:close(Client),
@@ -45,3 +47,15 @@ send_banner(Client, Id, Version) ->
     Banner = string:join([Id, Version], "/"),
     Line = string:concat(Banner, "\r\n"),
     amitcp:send(Client, Line, raw).
+
+send_response(SessionPid, Response, Command) ->
+    case amilist:get_value(Command, actionid) of
+        {error, {no_key, _Key}} ->
+            SessionPid ! {self(), Response};
+        ActionId ->
+            Response1 = amilist:set_value(Response, actionid, ActionId),
+            SessionPid ! {self(), Response1}
+    end.
+
+send_event(SessionPid, Event) ->
+    SessionPid ! {self(), Event}.

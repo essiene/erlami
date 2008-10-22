@@ -15,6 +15,3 @@ clean:
 	@cd client; make clean
 	@cd tests; make clean
 	@rm -rf ebin
-
-
-

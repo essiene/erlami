@@ -40,6 +40,10 @@ state_logged_in(SessionPid, Tid, Ets) ->
             SessionPid ! {self(), NewCommand},
             ets:insert(Ets, {integer_to_list(ActionId), From}),
             state_logged_in(SessionPid, ActionId, Ets);
+        {_From, [{event, _EventName} | _Rest] = Event} ->
+            util:logmessage(Event),
+            util:logmessage("----"),
+            state_logged_in(SessionPid, Tid, Ets);
         _Any ->
             state_logged_in(SessionPid, Tid, Ets)
     end.

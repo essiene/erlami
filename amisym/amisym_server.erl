@@ -16,6 +16,7 @@ start(Port) ->
 
 init(Server) ->
     process_flag(trap_exit, true),
+    amisym_eventbus:start(),
     serve(Server).
 
 serve(Server) ->
@@ -27,5 +28,6 @@ serve(Server) ->
         Type: Exception ->
             {Type, Exception}
     after
-        gen_tcp:close(Server)
+        gen_tcp:close(Server),
+        amisym_eventbus:stop()
     end.

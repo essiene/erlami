@@ -53,5 +53,3 @@ connect(Host, Port) ->
         {error, Reason} ->
             throw({connect, Reason})
     end.
-
-
