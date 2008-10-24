@@ -31,20 +31,20 @@ handler_set(EvtProc, EventName, {Module, Fun, Args}) ->
     ets:insert(EvtProc, {EventName, {Module, Fun, Args}}).
 
 handler_set_default(EvtProc, {_Module, _Fun, _Args}=Handler) ->
-    handler_set(EvtProc, evtproc_default, Handler).
+    handler_set(EvtProc, 'evtproc_default', Handler).
 
 handler_get(EvtProc, EventName) ->
     HandlerList = ets:match_object(EvtProc, {EventName, '_'}),
     case HandlerList of
         [] ->
-            [{evtproc_default, {Module, Fun, Args}}] = ets:match_object(EvtProc, {evtproc_default, '_'}),
+            [{'evtproc_default', {Module, Fun, Args}}] = ets:match_object(EvtProc, {evtproc_default, '_'}),
             {Module, Fun, Args};
         [{EventName, {Module, Fun, Args}}] ->
             {Module, Fun, Args}
     end.
 
 handler_get_default(EvtProc) ->
-    handler_get(EvtProc, evtproc_default).
+    handler_get(EvtProc, 'evtproc_default').
 
 handler_del(EvtProc, EventName) ->
     ets:delete(EvtProc, EventName).
@@ -53,8 +53,8 @@ handle(EvtProc, [{event, EventName} | _Rest] = Event) ->
     {Module, Fun, Args} = handler_get(EvtProc, EventName),
     apply(Module, Fun, [Event, Args]).
 
-evtproc_default(Event, Args) ->
-    util:logmessage(""),
-    util:logmessage(Event),
-    util:logmessage(Args),
-    util:logmessage("").
+evtproc_default(_Event, _Args) ->
+    %util:logmessage("---- No Handler ----"),
+    %util:logmessage(Event),
+    %util:logmessage("--------------------").
+    do_nothing.

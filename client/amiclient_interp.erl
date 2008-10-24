@@ -43,11 +43,11 @@ state_logged_in(SessionPid, EvtProc, Tid, SenderMap) ->
             state_logged_in(SessionPid, EvtProc, ActionId, SenderMap);
         {From, {evtproc_handler_set, EventName, Handler}} ->
             amiclient_evtproc:handler_set(EvtProc, EventName, Handler),
-            From ! {handler_set, EventName, Handler},
+            From ! {self(), {handler_set, EventName, Handler}},
             state_logged_in(SessionPid, EvtProc, Tid, SenderMap);
         {From, {evtproc_handler_del, EventName}} ->
             amiclient_evtproc:handler_del(EvtProc, EventName),
-            From ! {handler_del, EventName},
+            From ! {self(), {handler_del, EventName}},
             state_logged_in(SessionPid, EvtProc, Tid, SenderMap);
         {From, close} ->
             SessionPid ! {self(), {close, close_requested}},

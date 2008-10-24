@@ -3,6 +3,7 @@
         new/0,
         set_value/3,
         get_value/2,
+        del_value/2,
         has_value/2,
         has_key/2,
         set_payload/2,
@@ -66,6 +67,9 @@ get_value(AmiList, Key) ->
         false ->
             {error, {no_key, Key}}
     end.
+
+del_value(AmiList, Key) ->
+    lists:keydelete(Key, 1, AmiList).
 
 has_value(AmiList, Value) ->
     lists:keymember(Value, 2, AmiList).

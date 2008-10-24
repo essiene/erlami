@@ -10,3 +10,18 @@
   potentialy swap it out. See all the state machines (amiclient_interp, etc).
 
   And not just ets, but lots of other low-level modules
+
+- The model for client event hangling now, is kind of a round 
+  about method to direct event routing. What I want to see is:
+
+    EvtHandler = funkyapp:event_handler_new(),
+    ami:event_handler_set(Ami, 'Newstate', EvtHandler).
+
+    Inside EvtHandler, I want to see this:
+
+    receive
+        {Interp, [{event, 'Newstate'} | _Rest} ->
+            do somestuff;
+        {Interp, [{event, 'Hangup'} | _Rest]} ->
+            do some other stuff;
+    end.

@@ -49,6 +49,14 @@ get_value_multple_entries_list_nokey_test() ->
     AmiList3 = amilist:set_value(AmiList2, key3, "Value3"),
     ?assertEqual({error, {no_key, key4}}, amilist:get_value(AmiList3, key4)).
 
+del_value_test() ->
+    AmiList = amilist:new(),
+    AmiList1 = amilist:set_value(AmiList, key1, "Value1"),
+    AmiList2 = amilist:set_value(AmiList1, key2, "Value2"),
+    ?assertEqual([{key1, "Value1"}, {key2, "Value2"}], AmiList2),
+    AmiList3 = amilist:del_value(AmiList2, key2),
+    ?assertEqual([{key1, "Value1"}], AmiList3).
+
 
 has_key_emptylist_test() ->
     AmiList = amilist:new(),
