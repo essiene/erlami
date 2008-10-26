@@ -16,7 +16,7 @@ new(Client, Username, Secret) ->
         {'EXIT', Pid, Reason} ->
             {error, Reason};
         {Pid, {ok, Interp}} ->
-            Interp;
+            {Pid, Interp};
         {Pid, Reason} ->
             {error, Reason}
     after 5000 ->

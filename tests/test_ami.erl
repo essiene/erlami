@@ -8,7 +8,9 @@ login_fail_test() ->
 
 login_ok_test() ->
     amisym:start(),
-    InterpPid = ami:new("localhost", 15038, "sym", "sym"),
+    {SessionPid, InterpPid} = ami:new("localhost", 15038, "sym", "sym"),
+    ?assert(SessionPid =/= self()),
+    ?assertEqual(true, is_pid(SessionPid)),
     ?assertEqual(true, is_pid(InterpPid)),
     amisym:stop().
 

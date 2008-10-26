@@ -25,3 +25,9 @@
         {Interp, [{event, 'Hangup'} | _Rest]} ->
             do some other stuff;
     end.
+
+- Decide what to do about the protocol versioning, should
+  we have seperate clients for the different versions?
+
+- move the 'asterisk-ami-name' into an include file, for easier
+  management
