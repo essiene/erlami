@@ -28,6 +28,7 @@ originate(Ami, Channel, Number, Context, Extension, Priority) ->
             {context, Context},
             {exten, Extension},
             {'priority', Priority},
+            {account, Channel},
             {variable, string:concat("asterisk-ami-name=", Channel)}
         ]).
 
@@ -38,6 +39,7 @@ originate(Ami, Channel, Context, Extension, Priority) ->
             {context, Context},
             {exten, Extension},
             {'priority', Priority},
+            {account, Channel},
             {variable, string:concat("asterisk-ami-name=", Channel)}
         ]).
 
