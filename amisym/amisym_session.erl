@@ -1,47 +1,30 @@
 -module(amisym_session).
 -export([
         new/1,
-        init/1,
         send_response/3,
         send_event/2
     ]).
+
+-export([
+        init/1,
+        handle_call/3,
+        handle_cast/2,
+        handle_info/2,
+        terminate/2,
+        code_change/3
+    ]).
+
 -include("ami.hrl").
+-behaviour(gen_server).
 
 new(Client) ->
-    SessionPid = spawn_link(?MODULE, init, [Client]),
-    amitcp:set_controlling_process(Client, SessionPid).
-
-init(Client) ->
-    send_banner(Client, ?SYM_BANNER, ?SYM_VERSION),
-    Interp = amisym_interp:new(),
-    process_flag(trap_exit, true),
-    session(Client, Interp, "").
-
-session(Client, Interp, Remainder) ->
-    inet:setopts(Client, [{active, once}]),
-    receive
-        {'EXIT', Interp, _Reason} ->
-            NewInterPid = amisym_interp:new(self()),
-            NewInterPid ! {self(), {cmd, change_state}},
-            session(Client, NewInterPid, Remainder);
-        {Interp, Message} ->
-            amitcp:send(Client, Message),
-            session(Client, Interp, Remainder);
-        {tcp_closed, Client} ->
-            gen_tcp:close(Client),
-            exit(Interp, {tcp_closed, Client});
-        {tcp_error, Client, Reason} ->
-            gen_tcp:close(Client),
-            exit(Interp, {tcp_error, Client, Reason});
-        {tcp, Client, Data} ->
-            NewData = string:concat(Remainder, Data),
-            {BlockList, NewRemainder} = messaging:get_blocks(NewData),
-            interp:interpret_blocks(Interp, BlockList),
-            session(Client, Interp, NewRemainder);
-        _Any ->
-            session(Client, Interp, Remainder)
+    case gen_server:start_link(?MODULE, Client, []) of
+        {ok, SessionPid} ->
+            amitcp:set_controlling_process(Client, SessionPid),
+            SessionPid;
+        Any ->
+            Any
     end.
-
 
 send_banner(Client, Id, Version) ->
     Banner = string:join([Id, Version], "/"),
@@ -51,11 +34,57 @@ send_banner(Client, Id, Version) ->
 send_response(SessionPid, Response, Command) ->
     case amilist:get_value(Command, actionid) of
         {error, {no_key, _Key}} ->
-            SessionPid ! {self(), Response};
+            sendmsg(SessionPid, Response);
         ActionId ->
             Response1 = amilist:set_value(Response, actionid, ActionId),
-            SessionPid ! {self(), Response1}
+            sendmsg(SessionPid, Response1)
     end.
 
 send_event(SessionPid, Event) ->
-    SessionPid ! {self(), Event}.
+    sendmsg(SessionPid, Event).
+
+sendmsg(SessionPid, Message) ->
+    gen_server:cast(SessionPid, {self(), Message}).
+
+% gen_server callbacks
+
+init(Client) ->
+    send_banner(Client, ?SYM_BANNER, ?SYM_VERSION),
+    Interp = amisym_interp:new(),
+    process_flag(trap_exit, true),
+    inet:setopts(Client, [{active, once}]),
+    {ok, {Client, Interp, ""}}.
+
+handle_call(_Request, _From, State) ->
+    {noreply, State}.
+
+handle_cast({Interp, Message}, {Client, Interp, Remainder}) ->
+    amitcp:send(Client, Message),
+    {noreply, {Client, Interp, Remainder}};
+handle_cast(_Request, State) ->
+    {noreply, State}.
+
+handle_info({'EXIT', Interp, _Reason}, {Client, Interp, Remainder}) ->
+            NewInterPid = amisym_interp:new(self()),
+            NewInterPid ! {self(), {cmd, change_state}},
+            {noreply, {Client, NewInterPid, Remainder}};
+handle_info({tcp_closed, Client}, {Client, _Interp, _Remainder}=State) ->
+    {stop, {tcp_closed, Client}, State};
+handle_info({tcp_error, Client, Reason}, {Client, _Interp, _Remainder}=State) ->
+    {stop, {tcp_error, Client, Reason}, State};
+handle_info({tcp, Client, Data}, {Client, Interp, Remainder}) ->
+    NewData = string:concat(Remainder, Data),
+    {BlockList, NewRemainder} = messaging:get_blocks(NewData),
+    interp:interpret_blocks(Interp, BlockList),
+    inet:setopts(Client, [{active, once}]),
+    {noreply, {Client, Interp, NewRemainder}};
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(Reason, {Client, Interp, _Remainder}) ->
+    gen_tcp:close(Client),
+    exit(Interp, Reason),
+    {stopped, Reason}.
+
+code_change(_OldVsn, {_Client, _Interp, _Remainder}=State, _Extra) ->
+    {noreply, State}.
