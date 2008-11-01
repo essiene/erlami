@@ -51,7 +51,11 @@ state_logged_in(SessionPid, EvtProc, Tid, SenderMap) ->
             state_logged_in(SessionPid, EvtProc, Tid, SenderMap);
         {From, close} ->
             SessionPid ! {self(), {close, close_requested}},
-            From ! {ok, closed};
+            receive
+                {SessionPid, {ok, closed}} ->
+                    ok
+            end,
+            From ! {self(), {ok, closed}};
         _Any ->
             state_logged_in(SessionPid, EvtProc, Tid, SenderMap)
     end.

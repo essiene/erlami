@@ -3,6 +3,7 @@
 -export([
         new/2,
         new/4,
+        close/1,
         execute/2,
         originate/6,
         originate/5,
@@ -19,6 +20,7 @@ new(Username, Secret) ->
 new(Host, Port, Username, Secret) ->
     Client = amitcp:connect(Host, Port),
     amiclient_session:new(Client, Username, Secret).
+
 
 originate(Ami, Channel, Number, Context, Extension, Priority) ->
     DialedChannel = string:join([Channel, Number], "/"),
@@ -44,17 +46,21 @@ originate(Ami, Channel, Context, Extension, Priority) ->
         ]).
 
 get_ami_name(Ami, Channel) ->
-    execute(Ami, [
+    Response = execute(Ami, [
             {action, getvar},
             {channel, Channel},
             {variable, "asterisk-ami-name"}
-        ]).
+        ]),
+    amilist:get_value(Response, value).
 
 event_handler_set({_Session, Interp}, EventName, {_Module, _Fun, _Args} = Handler) ->
     interp:rpc(Interp, {evtproc_handler_set, EventName, Handler}).
 
 event_handler_del({_Session, Interp}, EventName) ->
     interp:rpc(Interp, {evtproc_handler_del, EventName}).
+
+close({_Session, Interp}=_Ami) ->
+    interp:rpc(Interp, close).
 
 execute({_Session, _Interp}, []) ->
     {error, no_command_specified};

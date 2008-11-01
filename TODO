@@ -11,7 +11,7 @@
 
   And not just ets, but lots of other low-level modules
 
-- The model for client event hangling now, is kind of a round 
+- The model for client event handling now, is kind of a round 
   about method to direct event routing. What I want to see is:
 
     EvtHandler = funkyapp:event_handler_new(),

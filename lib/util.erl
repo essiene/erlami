@@ -125,4 +125,4 @@ logmessage([{Key, Value} | T]) ->
     io:format("~p~n", [{Key, Value}]),
     logmessage(T);
 logmessage(Any) ->
-    io:format("~p~n", [Any]).
+    io:format("~p~n~n", [Any]).

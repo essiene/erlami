@@ -74,7 +74,8 @@ state_normal(Client, Interp, OldData) ->
     inet:setopts(Client, [{active, once}]),
     receive
         {Interp, {close, Reason}} ->
-            exit(Reason);
+            util:logmessage(Reason),
+            Interp ! {self(), {ok, closed}};
         {Interp, [{action, _Action} | _Rest] = Command} ->
             amitcp:send(Client, Command),
             state_normal(Client, Interp, OldData);

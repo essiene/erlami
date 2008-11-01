@@ -19,3 +19,15 @@ execute_working_test() ->
     Ami = ami:new("localhost", 15038, "sym", "sym"), 
     [{response, "Success"} | _Rest] = ami:execute(Ami, [{action, "login"}]),
     amisym:stop().
+
+close_test() ->
+    amisym:start(),
+    {SessionPid, InterpPid} = Ami = ami:new("localhost", 15038, "sym", "sym"),
+    ?assertEqual(true, is_process_alive(SessionPid)),
+    ?assertEqual(true, is_process_alive(InterpPid)),
+    {ok, closed} = ami:close(Ami),
+    ?assertEqual(false, is_process_alive(SessionPid)),
+    ?assertEqual(false, is_process_alive(InterpPid)),
+    amisym:stop().
+
+
