@@ -55,8 +55,7 @@ server_ping(ServerPid) ->
 
 
 server_stop(ServerPid) ->
-    exit(ServerPid, kill),
-    exit(normal).
+    amisym_server:stop(ServerPid).
 
 rpc(Cmd) ->
     case whereis(?SYM_REG_NAME) of

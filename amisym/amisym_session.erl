@@ -1,6 +1,7 @@
 -module(amisym_session).
 -export([
         new/1,
+        close/1,
         send_response/3,
         send_event/2
     ]).
@@ -25,6 +26,10 @@ new(Client) ->
         Any ->
             Any
     end.
+
+close(SessionPid) ->
+    gen_server:cast(SessionPid, close).
+
 
 send_banner(Client, Id, Version) ->
     Banner = string:join([Id, Version], "/"),
@@ -55,6 +60,9 @@ init(Client) ->
     inet:setopts(Client, [{active, once}]),
     {ok, {Client, Interp, ""}}.
 
+handle_call(stop, _From, {_Client, Interp, _Remainder}=State) ->
+    interp:close(Interp),
+    {stop, stop_requested, State};
 handle_call(_Request, _From, State) ->
     {noreply, State}.
 
@@ -65,13 +73,13 @@ handle_cast(_Request, State) ->
     {noreply, State}.
 
 handle_info({'EXIT', Interp, _Reason}, {Client, Interp, Remainder}) ->
-            NewInterPid = amisym_interp:new(self()),
-            NewInterPid ! {self(), {cmd, change_state}},
+            NewInterPid = amisym_interp:new(),
+            interp:change_state(NewInterPid),
             {noreply, {Client, NewInterPid, Remainder}};
 handle_info({tcp_closed, Client}, {Client, _Interp, _Remainder}=State) ->
-    {stop, {tcp_closed, Client}, State};
-handle_info({tcp_error, Client, Reason}, {Client, _Interp, _Remainder}=State) ->
-    {stop, {tcp_error, Client, Reason}, State};
+    {stop, normal, State};
+handle_info({tcp_error, Client, _Reason}, {Client, _Interp, _Remainder}=State) ->
+    {stop, normal, State};
 handle_info({tcp, Client, Data}, {Client, Interp, Remainder}) ->
     NewData = string:concat(Remainder, Data),
     {BlockList, NewRemainder} = messaging:get_blocks(NewData),
@@ -81,10 +89,9 @@ handle_info({tcp, Client, Data}, {Client, Interp, Remainder}) ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(Reason, {Client, Interp, _Remainder}) ->
+terminate(_Reason, {Client, Interp, _Remainder}) ->
     gen_tcp:close(Client),
-    exit(Interp, Reason),
-    {stopped, Reason}.
+    interp:close(Interp).
 
 code_change(_OldVsn, {_Client, _Interp, _Remainder}=State, _Extra) ->
     {noreply, State}.

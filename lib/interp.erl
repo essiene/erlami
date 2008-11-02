@@ -5,6 +5,16 @@
         rpc/2
     ]).
 
+-export([
+        change_state/1,
+        close/1
+    ]).
+
+change_state(Interp) ->
+    gen_fsm:send_event(Interp, {self(), change_state}).
+
+close(Interp) ->
+    gen_fsm:send_event(Interp, {self(), close}).
 
 interpret_blocks(Interp, ListOfBlocks) ->
     SessionPid = self(),
@@ -36,11 +46,7 @@ interpret_blocks(Interp, [Block | Rest], SessionPid) ->
 
 
 interpret_amilist(Interp, AmiList, SessionPid) ->
-    Interp ! {SessionPid, AmiList}.
+    gen_fsm:send_event(Interp, {SessionPid, AmiList}).
 
 rpc(Interp, Command) ->
-    Interp ! {self(), Command},
-    receive
-        {Interp, Response} ->
-            Response
-    end.
+    gen_fsm:sync_send_event(Interp, Command).

@@ -60,7 +60,7 @@ event_handler_del({_Session, Interp}, EventName) ->
     interp:rpc(Interp, {evtproc_handler_del, EventName}).
 
 close({_Session, Interp}=_Ami) ->
-    interp:rpc(Interp, close).
+    interp:close(Interp).
 
 execute({_Session, _Interp}, []) ->
     {error, no_command_specified};

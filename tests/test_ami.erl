@@ -25,7 +25,8 @@ close_test() ->
     {SessionPid, InterpPid} = Ami = ami:new("localhost", 15038, "sym", "sym"),
     ?assertEqual(true, is_process_alive(SessionPid)),
     ?assertEqual(true, is_process_alive(InterpPid)),
-    {ok, closed} = ami:close(Ami),
+    ami:close(Ami),
+    timer:sleep(2000),
     ?assertEqual(false, is_process_alive(SessionPid)),
     ?assertEqual(false, is_process_alive(InterpPid)),
     amisym:stop().
