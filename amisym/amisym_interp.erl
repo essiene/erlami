@@ -1,9 +1,5 @@
 -module(amisym_interp).
 -export([
-        new/0
-    ]).
-
--export([
         init/1,
         handle_event/3,
         handle_sync_event/4,
@@ -13,11 +9,15 @@
     ]).
 
 -export([
+        new/0,
         insecure/2,
-        secure/2
+        insecure/3,
+        secure/2,
+        secure/3
     ]).
 
 -behaviour(gen_fsm).
+-behaviour(ami_interp).
 
 
 % public functions
@@ -53,6 +53,8 @@ code_change(_OldVsn, StateName, State, _Extra) ->
     {next_state, StateName, State}.
 
 % State handlers
+insecure(Event, _From, State) ->
+    {reply, {illegal_event, Event}, insecure, State}.
 
 insecure({SessionPid, change_state}, SessionPid) ->
     {next_state, secure, SessionPid};
@@ -71,9 +73,12 @@ insecure({SessionPid, [{action, "login"} | _Rest] = Command}, SessionPid) ->
 insecure({SessionPid, Command}, SessionPid) ->
     amisym_session:send_response(SessionPid, amisym_actions:a_not_logged_in(Command, false), Command),
     {next_state, insecure, SessionPid};
-insecure(_Request, State) ->
+insecure(_Event, State) ->
     {next_state, insecure, State}.
 
+
+secure(Event, _From, State) ->
+    {reply, {illegal_event, Event}, secure, State}.
 
 secure({SessionPid, close}, SessionPid) ->
     amisym_eventbus:disconnect(),
@@ -88,5 +93,5 @@ secure({SessionPid, [{action, Action} | _Rest] = Command}, SessionPid) ->
 secure({amisym_eventbus, [{event, _EventName} | _Rest] = Event}, SessionPid) ->
     amisym_session:send_event(SessionPid, Event),
     {next_state, secure, SessionPid};
-secure(_Request, State) ->
+secure(_Event, State) ->
     {next_state, secure, State}.

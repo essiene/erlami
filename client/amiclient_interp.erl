@@ -1,9 +1,5 @@
 -module(amiclient_interp).
 -export([
-        new/0
-    ]).
-
--export([
         init/1,
         handle_event/3,
         handle_sync_event/4,
@@ -13,12 +9,15 @@
     ]).
 
 -export([
+        new/0,
         insecure/2,
+        insecure/3,
         secure/2,
         secure/3
     ]).
 
 -behaviour(gen_fsm).
+-behaviour(ami_interp).
 
 
 new() ->
@@ -53,6 +52,9 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 
 % insecure state
 
+insecure(Event, _From, State) ->
+    {reply, {illegal_event, Event}, insecure, State}.
+
 insecure({SessionPid, close}, SessionPid) ->
     {stop, normal, SessionPid};
 insecure({SessionPid, [{response, "Success"} | _Rest]}, SessionPid) ->
@@ -61,7 +63,9 @@ insecure({SessionPid, [{response, "Success"} | _Rest]}, SessionPid) ->
     {next_state, secure, {SessionPid, EvtProc, 0, ets:new(actionid_pidmap, [private])}};
 insecure({SessionPid, [{response, "Error"} | _Rest]}, SessionPid) ->
     SessionPid ! {self(), {login, failed}},
-    {stop, normal, SessionPid}.
+    {stop, normal, SessionPid};
+insecure(_Event, State) ->
+    {next_state, insecure, State}.
 
 % secure state
 secure({_From, close}, {SessionPid, _EvtProc, _Tid, _SenderMap}=State) ->
@@ -75,6 +79,8 @@ secure({SessionPid, [{response, _Status} | _Rest] = Response}, {SessionPid, _Evt
     {next_state, secure, State};
 secure({SessionPid, [{event, _EventName} | _Rest] = Event}, {SessionPid, EvtProc, _Tid, _SenderMap}=State) ->
     amiclient_evtproc:handle(EvtProc, Event),
+    {next_state, secure, State};
+secure(_Event, State) ->
     {next_state, secure, State}.
 
 secure({evtproc_handler_set, EventName, Handler}, _From, {_SessionPid, EvtProc, _Tid, _SenderMap}=State) ->  % Consider making an Ami() = {SessionPid, InterpPid, EventHandlerPid}
@@ -88,5 +94,7 @@ secure([{action, _Action} | _Rest]= Cmd, From, {SessionPid, EvtProc, Tid, Sender
     NewCmd = amilist:set_value(Cmd, actionid, ActionId),
     SessionPid ! {self(), NewCmd},
     ets:insert(SenderMap, {integer_to_list(ActionId), From}),
-    {next_state, secure, {SessionPid, EvtProc, ActionId, SenderMap}}.
+    {next_state, secure, {SessionPid, EvtProc, ActionId, SenderMap}};
+secure(Event, _From, State) ->
+    {reply, {illegal_event, Event}, secure, State}.
 

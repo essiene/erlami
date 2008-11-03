@@ -10,7 +10,7 @@ $(EBIN_DIR)/%.beam:  %.erl
 
 OBJECTS=util amilist \
 		messaging amitcp \
-		interp
+		interp ami_interp
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
