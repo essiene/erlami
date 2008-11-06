@@ -20,6 +20,24 @@ execute_working_test() ->
     [{response, "Success"} | _Rest] = ami:execute(Ami, [{action, "login"}]),
     amisym:stop().
 
+originate_no_number_test() ->
+    amisym:start(),
+    Ami = ami:new("localhost", 15038, "sym", "sym"), 
+    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass", local, 111, 1),
+    amisym:stop().
+
+originate_prejoined_number_test() ->
+    amisym:start(),
+    Ami = ami:new("localhost", 15038, "sym", "sym"), 
+    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass/111222333", local, 111, 1),
+    amisym:stop().
+
+originate_no_prejoined_number_test() ->
+    amisym:start(),
+    Ami = ami:new("localhost", 15038, "sym", "sym"), 
+    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass", "111222333", local, 111, 1),
+    amisym:stop().
+
 close_test() ->
     amisym:start(),
     {SessionPid, InterpPid} = Ami = ami:new("localhost", 15038, "sym", "sym"),

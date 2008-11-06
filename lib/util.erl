@@ -7,6 +7,7 @@
         strip/1,
         append_mark/1,
         remove_mark/1,
+        build_chan_vars/1,
         logmessage/1
     ]).
 
@@ -108,6 +109,20 @@ remove_mark(MarkedString) ->
             string:substr(MarkedString, 1, MarkerPosition)
     end.
 
+
+build_chan_vars(ChanVars) ->
+    build_chan_vars(ChanVars, []).
+
+build_chan_vars([], Accm) ->
+    lists:reverse(Accm);
+build_chan_vars([{Key, Val} | Rest], Accm) when is_list(Key), is_list(Val) ->
+    Var = string:join([Key, Val], "="),
+    NewAccm = [{variable, Var} | Accm],
+    build_chan_vars(Rest, NewAccm);
+build_chan_vars([{Key, Val} | Rest], Accm) when is_atom(Key), is_list(Val) ->
+    NewKey = atom_to_list(Key),
+    build_chan_vars([{NewKey, Val} | Rest], Accm).
+    
 
 
 

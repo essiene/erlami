@@ -2,7 +2,8 @@
 -export([
         interpret_blocks/2,
         interpret_blocks/3,
-        rpc/2
+        rpc/2,
+        rpc/3
     ]).
 
 -export([
@@ -50,3 +51,5 @@ interpret_amilist(Interp, AmiList, SessionPid) ->
 
 rpc(Interp, Command) ->
     gen_fsm:sync_send_event(Interp, Command).
+rpc(Interp, Command, Timeout) ->
+    gen_fsm:sync_send_event(Interp, Command, Timeout).

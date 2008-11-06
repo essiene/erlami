@@ -89,3 +89,21 @@ remove_mark_unmarked_test() ->
 
 remove_mark_marked_test() ->
     ?assertEqual("marked_string", util:remove_mark("marked_stringPROCESSORMARK")).
+
+
+build_chan_var_empty_test() ->
+    ?assertEqual([], util:build_chan_vars([])).
+
+build_chan_var_single_test() ->
+    ?assertEqual([{variable, "key1=val1"}], util:build_chan_vars([{key1, "val1"}])).
+
+build_chan_var_multiple_test() ->
+    ?assertEqual([
+            {variable, "key1=val1"}, 
+            {variable, "key2=val2"}, 
+            {variable, "key3=val3"}], 
+        util:build_chan_vars([
+                {key1, "val1"},
+                {key2, "val2"},
+                {key3, "val3"}
+            ])).

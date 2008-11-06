@@ -56,11 +56,11 @@ a_originate(Command, true) ->
         _Priority = amilist:get_value(Command, 'priority'),
         
         case Channel of
-            "SIP/pass/" ++ Number ->
-                originate_events(Number),
-                [{response, "Success"}, {message, "Originate successfull"}];
             "SIP/fail/" ++ _Number ->
-                [{response, "Error"}, {message, "Originate failed"}]
+                [{response, "Error"}, {message, "Originate failed"}];
+            Channel ->
+                originate_events(Channel),
+                [{response, "Success"}, {message, "Originate successfull"}]
         end
 
     catch
@@ -71,24 +71,24 @@ a_originate(Command, true) ->
 originate_events(Number) ->
     spawn(?MODULE, originate_state_newchannel, [Number]).
 
-originate_state_newchannel(Number) ->
-    Event = [{event, 'NewChannel'}, {state, 'Down'}, {channel, "SIP/pass/" ++ Number ++ "-ffaabbc"}],
+originate_state_newchannel(Channel) ->
+    Event = [{event, 'NewChannel'}, {state, 'Down'}, {channel, Channel ++ "-ffaabbc"}],
     amisym_eventbus:message(Event),
     timer:sleep(1000),
-    originate_state_newstate_ringing(Number).
+    originate_state_newstate_ringing(Channel).
 
-originate_state_newstate_ringing(Number) ->
-    Event = [{event, 'NewState'}, {state, 'Ringing'}, {channel, "SIP/pass/" ++ Number ++ "-ffaabbc"}],
+originate_state_newstate_ringing(Channel) ->
+    Event = [{event, 'NewState'}, {state, 'Ringing'}, {channel, Channel ++ "-ffaabbc"}],
     amisym_eventbus:message(Event),
     timer:sleep(5000),
-    originate_state_newstate_up(Number).
+    originate_state_newstate_up(Channel).
 
-originate_state_newstate_up(Number) ->
-    Event = [{event, 'NewState'}, {state, 'Up'}, {channel, "SIP/pass/" ++ Number ++ "-ffaabbc"}],
+originate_state_newstate_up(Channel) ->
+    Event = [{event, 'NewState'}, {state, 'Up'}, {channel, Channel ++ "-ffaabbc"}],
     amisym_eventbus:message(Event),
     timer:sleep(10000),
-    originate_state_hangup(Number).
+    originate_state_hangup(Channel).
 
-originate_state_hangup(Number) ->
-    Event = [{event, 'Hangup'}, {channel, "SIP/pass/" ++ Number ++ "-ffaabbc"}],
+originate_state_hangup(Channel) ->
+    Event = [{event, 'Hangup'}, {channel, Channel ++ "-ffaabbc"}],
     amisym_eventbus:message(Event).
