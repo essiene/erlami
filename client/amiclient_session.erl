@@ -16,6 +16,7 @@ new(Client, Username, Secret) ->
         {'EXIT', Pid, Reason} ->
             {error, Reason};
         {Pid, {ok, Interp}} ->
+            unlink(Pid),
             {Pid, Interp};
         {Pid, Reason} ->
             {error, Reason}

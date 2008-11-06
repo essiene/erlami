@@ -63,8 +63,8 @@ insecure({SessionPid, close}, SessionPid) ->
 insecure({SessionPid, [{action, "login"} | _Rest] = Command}, SessionPid) ->
     case amisym_actions:a_login(Command, false) of
         {ok, Response} ->
-            amisym_session:send_response(SessionPid, Response, Command),
             amisym_eventbus:connect(),
+            amisym_session:send_response(SessionPid, Response, Command),
             {next_state, secure, SessionPid};
         {error, Response} ->
             amisym_session:send_response(SessionPid, Response, Command),

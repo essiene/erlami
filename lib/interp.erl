@@ -3,7 +3,8 @@
         interpret_blocks/2,
         interpret_blocks/3,
         rpc/2,
-        rpc/3
+        rpc/3,
+        cast/2
     ]).
 
 -export([
@@ -48,6 +49,9 @@ interpret_blocks(Interp, [Block | Rest], SessionPid) ->
 
 interpret_amilist(Interp, AmiList, SessionPid) ->
     gen_fsm:send_event(Interp, {SessionPid, AmiList}).
+
+cast(Interp, Command) ->
+    gen_fsm:send_event(Interp, Command).
 
 rpc(Interp, Command) ->
     gen_fsm:sync_send_event(Interp, Command).

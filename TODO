@@ -11,23 +11,11 @@
 
   And not just ets, but lots of other low-level modules
 
-- The model for client event handling now, is kind of a round 
-  about method to direct event routing. What I want to see is:
-
-    EvtHandler = funkyapp:event_handler_new(),
-    ami:event_handler_set(Ami, 'Newstate', EvtHandler).
-
-    Inside EvtHandler, I want to see this:
-
-    receive
-        {Interp, [{event, 'Newstate'} | _Rest} ->
-            do somestuff;
-        {Interp, [{event, 'Hangup'} | _Rest]} ->
-            do some other stuff;
-    end.
-
 - Decide what to do about the protocol versioning, should
   we have seperate clients for the different versions?
 
 - move the 'asterisk-ami-name' into an include file, for easier
   management
+
+- amisym_eventbus should be a gen_server
+- complete otp migration all thru the library

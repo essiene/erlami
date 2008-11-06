@@ -9,8 +9,9 @@
         originate/6,
         originate/7,
         get_ami_name/2,
-        event_handler_set/3,
-        event_handler_del/2
+        event_handler_add/3,
+        event_handler_del/2,
+        event_handler_get/1
     ]).
 
 
@@ -51,11 +52,14 @@ get_ami_name(Ami, Channel) ->
         ]),
     amilist:get_value(Response, value).
 
-event_handler_set({_Session, Interp}, EventName, {_Module, _Fun, _Args} = Handler) ->
-    interp:rpc(Interp, {evtproc_handler_set, EventName, Handler}).
+event_handler_add({_Session, Interp}, Handler, Args) ->
+    interp:rpc(Interp, {handler_add, Handler, Args}).
 
-event_handler_del({_Session, Interp}, EventName) ->
-    interp:rpc(Interp, {evtproc_handler_del, EventName}).
+event_handler_del({_Session, Interp}, Handler) ->
+    interp:rpc(Interp, {handler_del, Handler}).
+
+event_handler_get({_Session, Interp}) ->
+    interp:rpc(Interp, handler_get).
 
 close({_Session, Interp}=_Ami) ->
     interp:close(Interp).

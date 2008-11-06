@@ -57,7 +57,7 @@ loop(Interps) ->
         {'EXIT', _Interp, killed} ->
             just_die;
         {'EXIT', Interp, Reason} ->
-            util:logmessage("~p disconnected. Reason: ~p~n", [Interp, Reason]),
+            util:logmessage({{disconnected, Interp}, {reason, Reason}}),
             ets:delete(Interps, {interp, Interp}),
             loop(Interps);
         {From, {cmd, disconnect}} ->
@@ -66,11 +66,12 @@ loop(Interps) ->
             loop(Interps);
         {From, {cmd, connect}} ->
             ets:insert(Interps, {interp, From}),
+            link(From),
             From ! {ok, connected},
             loop(Interps);
         {From, {cmd, {message, Message}}} ->
             AllInterps = ets:lookup(Interps, interp),
-            lists:foreach(fun({interp, Interp}) -> Interp ! {amisym_eventbus, Message} end, AllInterps),
+            lists:foreach(fun({interp, Interp}) -> interp:cast(Interp, {amisym_eventbus, Message}) end, AllInterps),
             From ! {ok, sent},
             loop(Interps);
         {From, {cmd, is_connected}} ->
@@ -84,6 +85,7 @@ loop(Interps) ->
             end;
         {From, {cmd, stop}} ->
             From ! {ok, stopped};
-        _Any ->
+        Any ->
+            util:logmessage({unexpected, Any}),
             loop(Interps)
     end.

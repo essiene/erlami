@@ -56,10 +56,10 @@ a_originate(Command, true) ->
         _Priority = amilist:get_value(Command, 'priority'),
         
         case Channel of
-            "SIP/fail/" ++ _Number ->
+            "SIP/fail" ++ _Number ->
                 [{response, "Error"}, {message, "Originate failed"}];
-            Channel ->
-                originate_events(Channel),
+            "SIP/pass" ++ _Number ->
+                originate_events("SIP/pass"),
                 [{response, "Success"}, {message, "Originate successfull"}]
         end
 
@@ -68,8 +68,8 @@ a_originate(Command, true) ->
             [{response, "Error"}, {message, Exception}]
     end.
 
-originate_events(Number) ->
-    spawn(?MODULE, originate_state_newchannel, [Number]).
+originate_events(Channel) ->
+    spawn(?MODULE, originate_state_newchannel, [Channel]).
 
 originate_state_newchannel(Channel) ->
     Event = [{event, 'NewChannel'}, {state, 'Down'}, {channel, Channel ++ "-ffaabbc"}],

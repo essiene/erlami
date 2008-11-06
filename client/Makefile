@@ -10,7 +10,8 @@ $(EBIN_DIR)/%.beam:  %.erl
 
 OBJECTS= amiclient_session \
 		 amiclient_interp \
-		 amiclient_evtproc ami
+		 amievent_manager amiclient_event_handler \
+		 ami
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
