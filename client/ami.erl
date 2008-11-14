@@ -8,6 +8,7 @@
         originate/5,
         originate/6,
         originate/7,
+        originate/8,
         get_ami_name/2,
         event_handler_add/3,
         event_handler_del/2,
@@ -29,6 +30,10 @@ originate(Ami, Channel, Context, Extension, Priority) ->
 originate(Ami, Channel, Number, Context, Extension, Priority) ->
     DialedChannel = string:join([Channel, Number], "/"),
     originate(Ami, DialedChannel, Context, Extension, Priority).
+
+originate(Ami, Channel, Number, Context, Extension, Priority, Timeout, ChanVars) ->
+    DialedChannel = string:join([Channel, Number], "/"),
+    originate(Ami, DialedChannel, Context, Extension, Priority, Timeout, ChanVars).
 
 
 originate(Ami, Channel, Context, Extension, Priority, Timeout, ChanVars) ->
