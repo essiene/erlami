@@ -58,18 +58,18 @@ insecure(Event, _From, State) ->
 insecure({SessionPid, close}, SessionPid) ->
     {stop, normal, SessionPid};
 insecure({SessionPid, [{response, "Success"} | _Rest]}, SessionPid) ->
-    SessionPid ! {self(), {login, ok}},
+    amiclient_session:login_ok(SessionPid),
     EventMgr = amievent_manager:start(),
     {next_state, secure, {SessionPid, EventMgr, 0, ets:new(actionid_pidmap, [private])}};
 insecure({SessionPid, [{response, "Error"} | _Rest]}, SessionPid) ->
-    SessionPid ! {self(), {login, failed}},
+    amiclient_session:login_failed(SessionPid),
     {stop, normal, SessionPid};
 insecure(_Event, State) ->
     {next_state, insecure, State}.
 
 % secure state
 secure({_From, close}, {SessionPid, _EventMgr, _Tid, _SenderMap}=State) ->
-    SessionPid ! {self(), {close, close_requested}},
+    amiclient_session:close(SessionPid),
     {stop, normal, State};
 secure({SessionPid, [{response, _Status} | _Rest] = Response}, {SessionPid, _EventMgr, _Tid, SenderMap}=State) ->
     ActionId = amilist:get_value(Response, actionid),
@@ -95,7 +95,8 @@ secure(handler_get, _From, {_SessionPid, EventMgr, _Tid, _SenderMap}=State) ->
 secure([{action, _Action} | _Rest]= Cmd, From, {SessionPid, EventMgr, Tid, SenderMap}) ->
     ActionId = Tid + 1,
     NewCmd = amilist:set_value(Cmd, actionid, ActionId),
-    SessionPid ! {self(), NewCmd},
+    amiclient_session:send_command(SessionPid, NewCmd),
+    util:logmessage({sent_to_session, NewCmd}),
     ets:insert(SenderMap, {integer_to_list(ActionId), From}),
     {next_state, secure, {SessionPid, EventMgr, ActionId, SenderMap}};
 secure(Event, _From, State) ->
