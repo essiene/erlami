@@ -73,14 +73,12 @@ handle_info({tcp, Client, NewData}, get_banner, {Client, OldData, {Username, Sec
     Data = string:concat(OldData, NewData),
     case string:str(Data, "\r\n") of
         0 ->
-            util:logmessage({still_getting_banner_data}),
             {next_state, get_banner, {Client, Data, Extra}};
         _Index -> 
             "Asterisk Call Manager/1.0" = util:strip(Data), % grab version here via matching
             Request = [{action, "login"}, {username, Username}, {secret, Secret}],
             amitcp:send(Client, Request),
             Interp = amiclient_interp:new(),
-            util:logmessage({banner_gotten_going_to_insecure}),
             {next_state, insecure, {Client, "", {Interp, Owner}}}
     end;
 
@@ -93,14 +91,14 @@ handle_info({tcp, Client, NewData}, secure, {Client, _OldData, Interp}=State) ->
     interpret_data(Interp, NewData, secure, State);
 
 handle_info({tcp_error, Client, Reason}, _StateName, {Client, _OldData, _Extra}=State) -> 
-    util:logmessage(Reason),
     {stop, Reason, State};
 handle_info({tcp_close, Client}, _StateName, {Client, _OldData, _Extra}=State) -> 
     {stop, connect_closed_by_peer, State};
 handle_info(_Info, StateName, State) ->
     {next_state, StateName, State}.
 
-terminate(_Reason, _StateName, _State) ->
+terminate(_Reason, _StateName, {Client, _OldData, _Extra}) ->
+    gen_tcp:close(Client),
     ok.
 
 code_change(_OldVsn, StateName, State, _Extra) ->
@@ -138,14 +136,12 @@ insecure(Event, _From, State) ->
 
 secure({Interp, [{action, _Action} | _Rest]=Command}, {Client, _OldData, Interp}=State) ->
     amitcp:send(Client, Command),
-    util:logmessage({sent_to_asterisk, Command}),
     {next_state, secure, State};
 
 secure(_Event, State) ->
     {next_state, secure, State}.
 
 secure({Interp, {close, Reason}}, From, {_Client, _OldData, Interp}=State) ->
-    util:logmessage(Reason),
     gen_fsm:reply(From, {ok, closed}),
     {stop, Reason, State};
 
@@ -160,6 +156,5 @@ interpret_data(Interp, NewData, StateName, {Client, OldData, Extra}=_State) ->
     Data = string:concat(OldData, NewData),
     {BlockList, RemainingData} = messaging:get_blocks(Data),
     interp:interpret_blocks(Interp, BlockList),
-    util:logmessage({sent_to_interpreter, BlockList}),
     {next_state, StateName, {Client, RemainingData, Extra}}.
 

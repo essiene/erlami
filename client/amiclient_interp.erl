@@ -96,7 +96,6 @@ secure([{action, _Action} | _Rest]= Cmd, From, {SessionPid, EventMgr, Tid, Sende
     ActionId = Tid + 1,
     NewCmd = amilist:set_value(Cmd, actionid, ActionId),
     amiclient_session:send_command(SessionPid, NewCmd),
-    util:logmessage({sent_to_session, NewCmd}),
     ets:insert(SenderMap, {integer_to_list(ActionId), From}),
     {next_state, secure, {SessionPid, EventMgr, ActionId, SenderMap}};
 secure(Event, _From, State) ->
