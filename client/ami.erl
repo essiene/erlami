@@ -66,7 +66,8 @@ event_handler_del({_Session, Interp}, Handler) ->
 event_handler_get({_Session, Interp}) ->
     interp:rpc(Interp, handler_get).
 
-close({_Session, Interp}=_Ami) ->
+close({Session, Interp}=_Ami) ->
+    amiclient_session:close(Session),
     interp:close(Interp).
 
 execute({_Session, _Interp}, []) ->

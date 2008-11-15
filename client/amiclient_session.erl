@@ -52,14 +52,18 @@ send_command(Pid, Cmd) ->
     gen_fsm:send_event(Pid, {self(), Cmd}).
 
 close(Pid) ->
-    gen_fsm:send_all_state_event(Pid, {self(), close}).
+    gen_fsm:sync_send_all_state_event(Pid, close).
 
 init([Client, Username, Secret]) ->
     inet:setopts(Client, [{active, once}]),
     {ok, get_banner, {Client, "", {Username, Secret, owner_not_set}}}.
 
+
 handle_event(_Event, StateName, State) ->
     {next_state, StateName, State}.
+
+handle_sync_event(close, _From, _StateName, State) ->
+    {stop, normal, {ok, closed}, State};
 
 handle_sync_event(Event, _From, StateName, State) ->
     {reply, {illegal_event, Event}, StateName, State}.

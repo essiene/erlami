@@ -37,6 +37,9 @@ init(SessionPid) ->
 handle_event(_Request, StateName, State) ->
     {next_state, StateName, State}.
 
+handle_sync_event(close, _From, _StateName, State) ->
+    {stop, normal, {ok, stopped}, State};
+
 handle_sync_event(Request, _From, StateName, State) ->
     {reply, {illegal_request, Request}, StateName, State}.
 
@@ -68,9 +71,6 @@ insecure(_Event, State) ->
     {next_state, insecure, State}.
 
 % secure state
-secure({_From, close}, {SessionPid, _EventMgr, _Tid, _SenderMap}=State) ->
-    amiclient_session:close(SessionPid),
-    {stop, normal, State};
 secure({SessionPid, [{response, _Status} | _Rest] = Response}, {SessionPid, _EventMgr, _Tid, SenderMap}=State) ->
     ActionId = amilist:get_value(Response, actionid),
     [{ActionId, Sender}] = ets:lookup(SenderMap, ActionId),

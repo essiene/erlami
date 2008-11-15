@@ -16,7 +16,7 @@ change_state(Interp) ->
     gen_fsm:send_event(Interp, {self(), change_state}).
 
 close(Interp) ->
-    gen_fsm:send_event(Interp, {self(), close}).
+    gen_fsm:sync_send_all_state_event(Interp, close).
 
 interpret_blocks(Interp, ListOfBlocks) ->
     SessionPid = self(),
