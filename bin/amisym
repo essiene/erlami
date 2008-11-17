@@ -1,0 +1,13 @@
+#! /bin/bash
+
+NODENAME='amisym@localhost'
+EBIN_DIR=/usr/lib/erlang/lib/amisym/ebin/
+
+erl \
+    -sname ${NODENAME} \
+    -noshell \
+    -pa ${EBIN_DIR} \
+    -pa ./ebin \
+    -amisym listen "0.0.0.0" \
+    -amisym port "15038" \
+    -s amisym
