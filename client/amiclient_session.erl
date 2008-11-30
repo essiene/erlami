@@ -75,7 +75,7 @@ handle_info({tcp, Client, NewData}, get_banner, {Client, OldData, {Username, Sec
         0 ->
             {next_state, get_banner, {Client, Data, Extra}};
         _Index -> 
-            "Asterisk Call Manager/1.0" = util:strip(Data), % grab version here via matching
+            "Asterisk Call Manager/" ++ _Version = util:strip(Data), 
             Request = [{action, "login"}, {username, Username}, {secret, Secret}],
             amitcp:send(Client, Request),
             Interp = amiclient_interp:new(),
