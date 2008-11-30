@@ -14,15 +14,7 @@ OBJECTS=test_util test_amilist \
 
 
 test: compile
-	erl $(ERL_FLAGS) -noshell -s test_util test -s init stop
-	erl $(ERL_FLAGS) -noshell -s test_amilist test -s init stop
-	erl $(ERL_FLAGS) -noshell -s test_messaging test -s init stop
-
-	erl $(ERL_FLAGS) -noshell -s test_amisym_eventbus test -s init stop
-	erl $(ERL_FLAGS) -noshell -s test_amievent_manager test -s init stop
-
-	erl $(ERL_FLAGS) -noshell -s test_amisym test -s init stop
-	erl $(ERL_FLAGS) -noshell -s test_ami test -s init stop
+	erl $(ERL_FLAGS) -noshell $(foreach t, $(OBJECTS), -s $(t) test) -s init stop
 
 
 compile: ${OBJECTS:%=%.beam}
