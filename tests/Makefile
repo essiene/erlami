@@ -1,9 +1,9 @@
 EBIN_DIR= ../ebin
 INCLUDE_DIR= ../include
 
-ERL_FLAGS= -pa $(EBIN_DIR) -I $(INCLUDE_DIR) -W
+ERL_FLAGS= -pa $(EBIN_DIR) -I $(INCLUDE_DIR) -W -o $(EBIN_DIR)
 
-%.beam: %.erl
+$(EBIN_DIR)/%.beam: %.erl
 	erlc $(ERL_FLAGS) $<
 
 
@@ -17,8 +17,8 @@ test: compile
 	erl $(ERL_FLAGS) -noshell $(foreach t, $(OBJECTS), -s $(t) test) -s init stop
 
 
-compile: ${OBJECTS:%=%.beam}
-	@echo 
+compile: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
+	@echo compile done
 
 clean:
 	@rm -f *.beam
