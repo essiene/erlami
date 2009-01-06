@@ -6,3 +6,4 @@ commit
 *.log
 listen.erl
 *~
+ebin
