@@ -5,3 +5,4 @@ commit
 .*.swp
 *.log
 listen.erl
+*~
