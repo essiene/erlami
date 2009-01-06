@@ -1,17 +1,12 @@
 all: 
-	@cd lib; make
-	@cd amisym; make
-	@cd client; make
+	@cd src; make
 
 test: all
 	@cd tests; make
 
 runsym: all
-	@cd amisym; make run
+	@cd src;make runsym
 
 clean:
-	@cd lib; make clean
-	@cd amisym; make clean
-	@cd client; make clean
-	@cd tests; make clean
+	@cd src; make clean
 	@rm -rf ebin

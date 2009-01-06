@@ -1,5 +1,5 @@
-EBIN_DIR= ../ebin
-INCLUDE_DIR= ../include
+EBIN_DIR= ../../ebin
+INCLUDE_DIR= ../../include
 
 ERL_FLAGS= -pa $(EBIN_DIR) -I $(INCLUDE_DIR) -W -o $(EBIN_DIR)
 

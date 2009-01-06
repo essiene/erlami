@@ -1,5 +1,5 @@
-EBIN_DIR= ../ebin
-INCLUDE_DIR= ../include
+EBIN_DIR= ../../ebin
+INCLUDE_DIR= ../../include
 
 ERL_FLAGS= -pa $(EBIN_DIR) -I $(INCLUDE_DIR) -W -o $(EBIN_DIR)
 
@@ -8,14 +8,17 @@ $(EBIN_DIR)/%.beam:  %.erl
 	erlc $(ERL_FLAGS) $<
 
 
-OBJECTS= amiclient_session \
-		 amiclient_interp \
-		 amievent_manager amiclient_event_handler \
-		 ami
+OBJECTS= amisym_interp amisym_session \
+		amisym_server amisym_sup \
+		amisym_eventbus amisym_actions \
+		amisym
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
-	@echo Ami Client Library Ready
+	@echo AmiSym Ready
+
+run: all
+	erl -pa $(EBIN_DIR) -s amisym start 
 
 clean:
 	@rm -f $(EBIN_DIR)/*.beam
