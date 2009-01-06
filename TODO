@@ -11,11 +11,5 @@
 
   And not just ets, but lots of other low-level modules
 
-- Decide what to do about the protocol versioning, should
-  we have seperate clients for the different versions?
-
-- move the 'asterisk-ami-name' into an include file, for easier
-  management
-
 - amisym_eventbus should be a gen_server
 - complete otp migration all thru the library
