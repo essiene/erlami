@@ -112,13 +112,13 @@ get_banner(Event, _From, St) ->
 
 
 
-insecure({Interp, {login, ok}}, #client_session{interp=Interp, owner=owner_not_set}=St) ->
+insecure({Interp, {login, ok}}, #client_session{interp=Interp, owner=undefined}=St) ->
     {next_state, secure, St};
 insecure({Interp, {login, ok}}, #client_session{interp=Interp}=St) ->
     gen_fsm:reply(St#client_session.owner, {ok, Interp}),
     {next_state, secure, St};
 
-insecure({Interp, {error, {login, failed}}}, #client_session{interp=Interp, owner=owner_not_set}=St) ->
+insecure({Interp, {error, {login, failed}}}, #client_session{interp=Interp, owner=undefined}=St) ->
     {stop, normal, St};
 insecure({Interp, {error, {login, failed}}}, #client_session{interp=Interp}=St) ->
     gen_fsm:reply(St#client_session.owner, {error, {login, failed}}),

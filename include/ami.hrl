@@ -12,7 +12,7 @@
 		conn,
 		username,
 		secret,
-		owner=owner_not_set,
+		owner=undefined,
 		data="",
 		interp
 	}).
