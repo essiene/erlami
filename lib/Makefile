@@ -7,13 +7,19 @@ $(EBIN_DIR)/%.beam:  %.erl
 	@mkdir -p $(EBIN_DIR)
 	erlc $(ERL_FLAGS) $<
 
+$(EBIN_DIR)/%.app:  %.app
+	@mkdir -p $(EBIN_DIR)
+	cp $< $@
+
 
 OBJECTS=util amilist \
 		messaging amitcp \
 		interp ami_interp
 
+APPS=erlami
 
-all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
+
+all: ${OBJECTS:%=$(EBIN_DIR)/%.beam} ${APPS:%=$(EBIN_DIR)/%.app} 
 	@echo AMI Core Library ready
 
 clean:
