@@ -7,3 +7,8 @@ commit
 listen.erl
 *~
 ebin
+*.tar
+*.gz
+*.bz2
+*.rpm
+erlami-*/
