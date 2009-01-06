@@ -16,3 +16,11 @@
 		data="",
 		interp
 	}).
+
+-record(client_interp, {
+        session,
+        tid=0,
+        evt_mngr=undefined,
+        senders=undefined
+    }).
+
