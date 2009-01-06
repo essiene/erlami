@@ -20,7 +20,7 @@
           ami
       ]
   },
-  {registered, []},
+  {registered, [erlami_amisym]},
   {env, []},
   {applications, [kernel, stdlib]}
  ]
