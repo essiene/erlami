@@ -8,7 +8,7 @@
 
 -define(SYM_ACTION_FUNCTION_PREFIX, "a_").
 
--define(VARNAME_AMI_NAME, "asterisk-ami-name").
+-define(VARNAME_AMI_NAME, "__erlami-name").
 
 -record(client_session, {
 		conn,
