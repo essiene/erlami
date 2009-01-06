@@ -15,6 +15,8 @@
         event_handler_get/1
     ]).
 
+-include("ami.hrl").
+
 
 
 new(Username, Secret) ->
@@ -46,14 +48,14 @@ originate(Ami, Channel, Context, Extension, Priority, Timeout, ChanVars) ->
             {'priority', Priority},
             {account, Channel},
             {timeout, Timeout},
-            {variable, string:concat("asterisk-ami-name=", Channel)} | ChanVarList
+            {variable, string:join([?VARNAME_AMI_NAME, Channel], "=")} | ChanVarList
         ], Timeout + 2000).
 
 get_ami_name(Ami, Channel) ->
     Response = execute(Ami, [
             {action, getvar},
             {channel, Channel},
-            {variable, "asterisk-ami-name"}
+            {variable, ?VARNAME_AMI_NAME}
         ]),
     amilist:get_value(Response, value).
 
