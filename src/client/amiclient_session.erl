@@ -83,13 +83,9 @@ handle_info({tcp, Client, NewData}, get_banner, #client_session{conn=Client}=St)
             {next_state, insecure, St#client_session{data="", interp=Interp}}
     end;
 
-handle_info({tcp, Client, NewData}, insecure, #client_session{conn=Client}=St) ->
+handle_info({tcp, Client, NewData}, StateName, #client_session{conn=Client}=St) ->
     inet:setopts(Client, [{active, once}]),
-    interpret_data(St, NewData, insecure);
-
-handle_info({tcp, Client, NewData}, secure, #client_session{conn=Client}=St) ->
-    inet:setopts(Client, [{active, once}]),
-    interpret_data(St, NewData, secure);
+    interpret_data(St, NewData, StateName);
 
 handle_info({tcp_error, Client, Reason}, _StateName, #client_session{conn=Client}=St) -> 
     {stop, Reason, St};
@@ -150,8 +146,6 @@ secure(owner, _From, St) ->
     {next_state, {ok, St#client_session.interp}, secure, St};
 secure(Event, _From, St) ->
     {reply, {illegal_event, Event}, secure, St}.
-
-
 
 interpret_data(St, NewData, StateName) ->
     Data = string:concat(St#client_session.data, NewData),
