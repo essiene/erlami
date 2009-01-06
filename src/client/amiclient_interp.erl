@@ -19,6 +19,8 @@
 -behaviour(gen_fsm).
 -behaviour(ami_interp).
 
+-include("ami.hrl").
+
 
 new() ->
     SessionPid = self(),
@@ -32,71 +34,76 @@ new() ->
 % gen_fsm callbacks
 
 init(SessionPid) ->
-    {ok, insecure, SessionPid}.
+    {ok, insecure, #client_interp{session=SessionPid}}.
 
-handle_event(_Request, StateName, State) ->
-    {next_state, StateName, State}.
+handle_event(_Request, StateName, St) ->
+    {next_state, StateName, St}.
 
-handle_sync_event(close, _From, _StateName, State) ->
-    {stop, normal, {ok, stopped}, State};
+handle_sync_event(close, _From, _StateName, St) ->
+    {stop, normal, {ok, stopped}, St};
 
-handle_sync_event(Request, _From, StateName, State) ->
-    {reply, {illegal_request, Request}, StateName, State}.
+handle_sync_event(Request, _From, StateName, St) ->
+    {reply, {illegal_request, Request}, StateName, St}.
 
-handle_info(_Info, StateName, State) ->
-    {next_state, StateName, State}.
+handle_info(_Info, StateName, St) ->
+    {next_state, StateName, St}.
 
-terminate(_Reason, _StateName, _State) ->
+terminate(_Reason, _StateName, _St) ->
     ok.
 
-code_change(_OldVsn, StateName, State, _Extra) ->
-    {next_state, StateName, State}.
+code_change(_OldVsn, StateName, St, _Extra) ->
+    {next_state, StateName, St}.
 
 
 % insecure state
 
-insecure(Event, _From, State) ->
-    {reply, {illegal_event, Event}, insecure, State}.
+insecure(Event, _From, St) ->
+    {reply, {illegal_event, Event}, insecure, St}.
 
-insecure({SessionPid, close}, SessionPid) ->
-    {stop, normal, SessionPid};
-insecure({SessionPid, [{response, "Success"} | _Rest]}, SessionPid) ->
+insecure({SessionPid, close}, #client_interp{session=SessionPid}=St) ->
+    {stop, normal, St};
+insecure({SessionPid, [{response, "Success"} | _Rest]}, #client_interp{session=SessionPid}=St) ->
     amiclient_session:login_ok(SessionPid),
-    EventMgr = amievent_manager:start(),
-    {next_state, secure, {SessionPid, EventMgr, 0, ets:new(actionid_pidmap, [private])}};
-insecure({SessionPid, [{response, "Error"} | _Rest]}, SessionPid) ->
+
+    StNew = St#client_interp{
+        evt_mngr=amievent_manager:start(),
+        senders=ets:new(actionid_pidmap, [private])
+    },
+
+    {next_state, secure, StNew};
+insecure({SessionPid, [{response, "Error"} | _Rest]}, #client_interp{session=SessionPid}=St) ->
     amiclient_session:login_failed(SessionPid),
-    {stop, normal, SessionPid};
-insecure(_Event, State) ->
-    {next_state, insecure, State}.
+    {stop, normal, St};
+insecure(_Event, St) ->
+    {next_state, insecure, St}.
 
 % secure state
-secure({SessionPid, [{response, _Status} | _Rest] = Response}, {SessionPid, _EventMgr, _Tid, SenderMap}=State) ->
+secure({SessionPid, [{response, _Status} | _Rest] = Response}, #client_interp{session=SessionPid}=St) ->
     ActionId = amilist:get_value(Response, actionid),
-    [{ActionId, Sender}] = ets:lookup(SenderMap, ActionId),
+    [{ActionId, Sender}] = ets:lookup(St#client_interp.senders, ActionId),
     gen_fsm:reply(Sender, Response),
-    ets:delete(SenderMap, ActionId),
-    {next_state, secure, State};
-secure({SessionPid, [{event, _EventName} | _Rest] = Event}, {SessionPid, EventMgr, _Tid, _SenderMap}=State) ->
-    amievent_manager:event_send(EventMgr, Event),
-    {next_state, secure, State};
-secure(_Event, State) ->
-    {next_state, secure, State}.
+    ets:delete(St#client_interp.senders, ActionId),
+    {next_state, secure, St};
+secure({SessionPid, [{event, _EventName} | _Rest] = Event}, #client_interp{session=SessionPid}=St) ->
+    amievent_manager:event_send(St#client_interp.evt_mngr, Event),
+    {next_state, secure, St};
+secure(_Event, St) ->
+    {next_state, secure, St}.
 
-secure({handler_add, Handler, Args}, _From, {_SessionPid, EventMgr, _Tid, _SenderMap}=State) ->  % Consider making an Ami() = {SessionPid, InterpPid, EventHandlerPid}
-    amievent_manager:handler_add(EventMgr, Handler, Args),
-    {reply, {handler_added, Handler}, secure, State};
-secure({handler_del, Handler}, _From, {_SessionPid, EventMgr, _Tid, _SenderMap}=State) ->
-    amievent_manager:handler_del(EventMgr, Handler),
-    {reply, {handler_deleted, Handler}, secure, State};
-secure(handler_get, _From, {_SessionPid, EventMgr, _Tid, _SenderMap}=State) ->
-    Handlers = amievent_manager:handler_get(EventMgr),
-    {reply, Handlers, secure, State};
-secure([{action, _Action} | _Rest]= Cmd, From, {SessionPid, EventMgr, Tid, SenderMap}) ->
-    ActionId = Tid + 1,
+secure({handler_add, Handler, Args}, _From, St) ->  
+    amievent_manager:handler_add(St#client_interp.evt_mngr, Handler, Args),
+    {reply, {handler_added, Handler}, secure, St};
+secure({handler_del, Handler}, _From, St) ->
+    amievent_manager:handler_del(St#client_interp.evt_mngr, Handler),
+    {reply, {handler_deleted, Handler}, secure, St};
+secure(handler_get, _From, St) ->
+    Handlers = amievent_manager:handler_get(St#client_interp.evt_mngr),
+    {reply, Handlers, secure, St};
+secure([{action, _Action} | _Rest]= Cmd, From, St) ->
+    ActionId = St#client_interp.tid + 1,
     NewCmd = amilist:set_value(Cmd, actionid, ActionId),
-    amiclient_session:send_command(SessionPid, NewCmd),
-    ets:insert(SenderMap, {integer_to_list(ActionId), From}),
-    {next_state, secure, {SessionPid, EventMgr, ActionId, SenderMap}};
-secure(Event, _From, State) ->
-    {reply, {illegal_event, Event}, secure, State}.
+    amiclient_session:send_command(St#client_interp.session, NewCmd),
+    ets:insert(St#client_interp.senders, {integer_to_list(ActionId), From}),
+    {next_state, secure, St#client_interp{tid=ActionId}};
+secure(Event, _From, St) ->
+    {reply, {illegal_event, Event}, secure, St}.
