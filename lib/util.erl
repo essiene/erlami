@@ -135,9 +135,6 @@ build_chan_vars([{Key, Val} | Rest], Accm) when is_atom(Key), is_list(Val) ->
 %% -------------------------------------------------------------------
 
 logmessage([]) ->
-    io:format("~n");
-logmessage([{Key, Value} | T]) ->
-    io:format("~p~n", [{Key, Value}]),
-    logmessage(T);
+    void;
 logmessage(Any) ->
-    io:format("~p~n~n", [Any]).
+    error_logger:info_report(Any).

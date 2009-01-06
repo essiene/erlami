@@ -7,3 +7,12 @@
 -define(SYM_REG_NAME, reg_amisym_server).
 
 -define(SYM_ACTION_FUNCTION_PREFIX, "a_").
+
+-record(client_session, {
+		conn,
+		username,
+		secret,
+		owner=owner_not_set,
+		data="",
+		interp
+	}).
