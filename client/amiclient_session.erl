@@ -56,7 +56,8 @@ close(Pid) ->
 
 init([Client, Username, Secret]) ->
     inet:setopts(Client, [{active, once}]),
-    {ok, get_banner, {Client, "", {Username, Secret, owner_not_set}}}.
+    ClientSession = #client_session{conn=Client, username=Username, secret=Secret},
+    {ok, get_banner, ClientSession}.
 
 
 handle_event(_Event, StateName, State) ->
@@ -68,93 +69,92 @@ handle_sync_event(close, _From, _StateName, State) ->
 handle_sync_event(Event, _From, StateName, State) ->
     {reply, {illegal_event, Event}, StateName, State}.
 
-handle_info({tcp, Client, NewData}, get_banner, {Client, OldData, {Username, Secret, Owner}=Extra}=_State) ->
+handle_info({tcp, Client, NewData}, get_banner, #client_session{conn=Client}=St) ->
     inet:setopts(Client, [{active, once}]),
-    Data = string:concat(OldData, NewData),
+    Data = string:concat(St#client_session.data, NewData),
     case string:str(Data, "\r\n") of
         0 ->
-            {next_state, get_banner, {Client, Data, Extra}};
+            {next_state, get_banner, St#client_session{data=Data}};
         _Index -> 
             "Asterisk Call Manager/" ++ _Version = util:strip(Data), 
-            Request = [{action, "login"}, {username, Username}, {secret, Secret}],
+            Request = [{action, "login"}, {username, St#client_session.username}, {secret, St#client_session.secret}],
             amitcp:send(Client, Request),
             Interp = amiclient_interp:new(),
-            {next_state, insecure, {Client, "", {Interp, Owner}}}
+            {next_state, insecure, St#client_session{data="", interp=Interp}}
     end;
 
-handle_info({tcp, Client, NewData}, insecure, {Client, _OldData, {Interp, _Owner}}=State) ->
+handle_info({tcp, Client, NewData}, insecure, #client_session{conn=Client}=St) ->
     inet:setopts(Client, [{active, once}]),
-    interpret_data(Interp, NewData, insecure, State);
+    interpret_data(St, NewData, insecure);
 
-handle_info({tcp, Client, NewData}, secure, {Client, _OldData, Interp}=State) ->
+handle_info({tcp, Client, NewData}, secure, #client_session{conn=Client}=St) ->
     inet:setopts(Client, [{active, once}]),
-    interpret_data(Interp, NewData, secure, State);
+    interpret_data(St, NewData, secure);
 
-handle_info({tcp_error, Client, Reason}, _StateName, {Client, _OldData, _Extra}=State) -> 
-    {stop, Reason, State};
-handle_info({tcp_close, Client}, _StateName, {Client, _OldData, _Extra}=State) -> 
-    {stop, connect_closed_by_peer, State};
-handle_info(_Info, StateName, State) ->
-    {next_state, StateName, State}.
+handle_info({tcp_error, Client, Reason}, _StateName, #client_session{conn=Client}=St) -> 
+    {stop, Reason, St};
+handle_info({tcp_close, Client}, _StateName, #client_session{conn=Client}=St) -> 
+    {stop, connect_closed_by_peer, St};
+handle_info(_Info, StateName, St) ->
+    {next_state, StateName, St}.
 
-terminate(_Reason, _StateName, {Client, _OldData, _Extra}) ->
-    gen_tcp:close(Client),
+terminate(_Reason, _StateName, St) ->
+    gen_tcp:close(St#client_session.conn),
     ok.
 
 code_change(_OldVsn, StateName, State, _Extra) ->
     {next_state, StateName, State}.
 
 
-get_banner(_Event, State) ->
-    {next_state, get_banner, State}.
+get_banner(_Event, St) ->
+    {next_state, get_banner, St}.
 
-get_banner(owner, From, {Client, OldData, {Username, Secret, _Owner}}=_State) ->
-    {next_state, get_banner, {Client, OldData, {Username, Secret, From}}};
-get_banner(Event, _From, State) ->
-    {reply, {illegal_event, Event}, get_banner, State}.
+get_banner(owner, From, St) ->
+    {next_state, get_banner, St#client_session{owner=From}};
+get_banner(Event, _From, St) ->
+    {reply, {illegal_event, Event}, get_banner, St}.
 
 
 
-insecure({Interp, {login, ok}}, {Client, OldData, {Interp, owner_not_set}}=_State) ->
-    {next_state, secure, {Client, OldData, Interp}};
-insecure({Interp, {login, ok}}, {Client, OldData, {Interp, Owner}}=_State) ->
-    gen_fsm:reply(Owner, {ok, Interp}),
-    {next_state, secure, {Client, OldData, Interp}};
+insecure({Interp, {login, ok}}, #client_session{interp=Interp, owner=owner_not_set}=St) ->
+    {next_state, secure, St};
+insecure({Interp, {login, ok}}, #client_session{interp=Interp}=St) ->
+    gen_fsm:reply(St#client_session.owner, {ok, Interp}),
+    {next_state, secure, St};
 
-insecure({Interp, {error, {login, failed}}}, {_Client, _OldData, {Interp, owner_not_set}}=State) ->
-    {stop, normal, State};
-insecure({Interp, {error, {login, failed}}}, {_Client, _OldData, {Interp, Owner}}=State) ->
-    gen_fsm:reply(Owner, {error, {login, failed}}),
-    {stop, normal, State};
-insecure(_Event, State) ->
-    {next_state, insecure, State}.
+insecure({Interp, {error, {login, failed}}}, #client_session{interp=Interp, owner=owner_not_set}=St) ->
+    {stop, normal, St};
+insecure({Interp, {error, {login, failed}}}, #client_session{interp=Interp}=St) ->
+    gen_fsm:reply(St#client_session.owner, {error, {login, failed}}),
+    {stop, normal, St};
+insecure(_Event, St) ->
+    {next_state, insecure, St}.
 
-insecure(owner, From, {Client, OldData, {Interp, _Owner}}=_State) ->
-    {next_state, insecure, {Client, OldData, {Interp, From}}};
-insecure(Event, _From, State) ->
-    {reply, {illegal_event, Event}, insecure, State}.
+insecure(owner, From, St) ->
+    {next_state, insecure, St#client_session{owner=From}};
+insecure(Event, _From, St) ->
+    {reply, {illegal_event, Event}, insecure, St}.
 
-secure({Interp, [{action, _Action} | _Rest]=Command}, {Client, _OldData, Interp}=State) ->
-    amitcp:send(Client, Command),
-    {next_state, secure, State};
+secure({Interp, [{action, _Action} | _Rest]=Command}, #client_session{interp=Interp}=St) ->
+    amitcp:send(St#client_session.conn, Command),
+    {next_state, secure, St};
 
-secure(_Event, State) ->
-    {next_state, secure, State}.
+secure(_Event, St) ->
+    {next_state, secure, St}.
 
-secure({Interp, {close, Reason}}, From, {_Client, _OldData, Interp}=State) ->
+secure({Interp, {close, Reason}}, From, #client_session{interp=Interp}=St) ->
     gen_fsm:reply(From, {ok, closed}),
-    {stop, Reason, State};
+    {stop, Reason, St};
 
-secure(owner, _From, {_Client, _OldData, Interp}=State) ->
-    {next_state, {ok, Interp}, secure, State};
-secure(Event, _From, State) ->
-    {reply, {illegal_event, Event}, secure, State}.
+secure(owner, _From, St) ->
+    {next_state, {ok, St#client_session.interp}, secure, St};
+secure(Event, _From, St) ->
+    {reply, {illegal_event, Event}, secure, St}.
 
 
 
-interpret_data(Interp, NewData, StateName, {Client, OldData, Extra}=_State) ->
-    Data = string:concat(OldData, NewData),
+interpret_data(St, NewData, StateName) ->
+    Data = string:concat(St#client_session.data, NewData),
     {BlockList, RemainingData} = messaging:get_blocks(Data),
-    interp:interpret_blocks(Interp, BlockList),
-    {next_state, StateName, {Client, RemainingData, Extra}}.
-
+    interp:interpret_blocks(St#client_session.interp, BlockList),
+    {next_state, StateName, St#client_session{data=RemainingData}}.
