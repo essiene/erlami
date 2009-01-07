@@ -30,35 +30,35 @@ init(_Arg) ->
     {ok, Interps}.
 
 connect() ->
-    gen_server:call(?NAME, connect).    
+    gen_server:call(?NAME, {connect, self()}).    
 
 disconnect() ->
-    gen_server:call(?NAME, disconnect).
+    gen_server:call(?NAME, {disconnect, self()}).
 
 message(Message) ->
     gen_server:call(?NAME, {message, Message}).    
 
 is_connected() ->
-    gen_server:call(?NAME, is_connected).
+    gen_server:call(?NAME, {is_connected, self()}).
 
-handle_call(connect, From, Interps) ->
-    ets:insert(Interps, {interp, From}),
+handle_call({connect, Pid}, _From, Interps) ->
+    ets:insert(Interps, {interp, Pid}),
     {reply, {ok, connected}, Interps};
 
-handle_call(disconnect, From, Interps) ->
-    case ets:delete_object(Interps, {interp, From}) of
+handle_call({disconnect, Pid}, _From, Interps) ->
+    case ets:delete_object(Interps, {interp, Pid}) of
         true ->
             {reply, {ok, deleted}, Interps};
         false ->
             {reply, {error, not_found}, Interps}
     end;            
 
-handle_call(is_connected, From, Interps) ->
+handle_call({is_connected, Pid}, _From, Interps) ->
 
-    error_logger:info_msg("From: ~p~n", [{from, From}]),
+    error_logger:info_msg("From: ~p~n", [{from, Pid}]),
     error_logger:info_msg("Interps: ~p~n", [{interps, ets:lookup(Interps, interp)}]),
 
-    case length(ets:match_object(Interps, {interp, From})) of 
+    case length(ets:match_object(Interps, {interp, Pid})) of 
         0 ->
             {reply, {ok, false}, Interps};
         _ ->
