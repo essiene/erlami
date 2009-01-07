@@ -44,17 +44,12 @@
         code_change/4
     ]).
 
--export([
-        amiopts_get/2, 
-        amiopts_get/3
-    ]).
-
 -include("ami.hrl").
 
 connect(Address, Port, Opts0) ->
-    {Opts1, Username} = amiopts_get(Opts0, ami_username),
-    {Opts2, Secret} = amiopts_get(Opts1, ami_secret),
-    {Opts3, WaitRetry} = amiopts_get(Opts2, ami_retry, ?AMI_SOCKET_RETRY),
+    {Opts1, Username} = util:proplists_remove(Opts0, ami_username),
+    {Opts2, Secret} = util:proplists_remove(Opts1, ami_secret),
+    {Opts3, WaitRetry} = util:proplists_remove(Opts2, ami_retry, ?AMI_SOCKET_RETRY),
 
     case gen_fsm:start(?MODULE, [Username, Secret, WaitRetry, 
                 Address, Port, Opts3], []) of
@@ -96,23 +91,3 @@ terminate(_Reason, _StateName, _St) ->
 
 code_change(_OldVsn, StateName, St, _Extra) ->
     {next_state, StateName, St}.
-
-
-amiopts_get(List0, Key, Default) ->
-    try
-        amiopts_get(List0, Key)
-    catch
-        throw:{not_found, Key} ->
-            List1 = proplists:delete(Key, List0),
-            {List1, Default}
-    end.
-
-
-amiopts_get(List0, Key) ->
-    case proplists:lookup(Key, List0) of
-        none ->
-            throw({not_found, Key});
-        {Key, Val} ->
-            List1 = proplists:delete(Key, List0),
-            {List1, Val}
-    end.

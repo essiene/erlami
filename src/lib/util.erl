@@ -8,7 +8,9 @@
         append_mark/1,
         remove_mark/1,
         build_chan_vars/1,
-        logmessage/1
+        logmessage/1,
+        proplists_remove/2,
+        proplists_remove/3
     ]).
 
 -include("ami.hrl").
@@ -125,7 +127,24 @@ build_chan_vars([{Key, Val} | Rest], Accm) when is_atom(Key), is_list(Val) ->
     
 
 
+proplists_remove(List0, Key, Default) ->
+    try
+        proplists_remove(List0, Key)
+    catch
+        throw:{not_found, Key} ->
+            List1 = proplists:delete(Key, List0),
+            {List1, Default}
+    end.
 
+
+proplists_remove(List0, Key) ->
+    case proplists:lookup(Key, List0) of
+        none ->
+            throw({not_found, Key});
+        {Key, Val} ->
+            List1 = proplists:delete(Key, List0),
+            {List1, Val}
+    end.
 
 
 %% -------------------------------------------------------------------
