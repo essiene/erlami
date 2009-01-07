@@ -13,6 +13,7 @@ $(EBIN_DIR)/%.app:  %.app
 
 
 OBJECTS=util amilist \
+		ami_socket \
 		messaging amitcp \
 		interp ami_interp
 
