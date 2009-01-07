@@ -45,6 +45,14 @@ handle_call(connect, From, Interps) ->
     ets:insert(Interps, {interp, From}),
     {reply, {ok, connected}, Interps};
 
+handle_call(disconnect, From, Interps) ->
+    case ets:delete_object(Interps, {interp, From}) of
+        true ->
+            {reply, {ok, deleted}, Interps};
+        false ->
+            {reply, {error, not_found}, Interps}
+    end;            
+
 handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
