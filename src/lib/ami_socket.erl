@@ -87,7 +87,8 @@ handle_sync_event(settings, _From, StateName, St) ->
         {host, St#ami_socket_state.host},
         {port, St#ami_socket_state.port},
         {opts, St#ami_socket_state.opts},
-        {wait_retry, St#ami_socket_state.wait_retry}
+        {wait_retry, St#ami_socket_state.wait_retry},
+        {state, StateName}
     ],
 
     {reply, {ok, Settings}, StateName, St};
