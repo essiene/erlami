@@ -53,6 +53,19 @@ handle_call(disconnect, From, Interps) ->
             {reply, {error, not_found}, Interps}
     end;            
 
+handle_call(is_connected, From, Interps) ->
+
+    error_logger:info_msg("From: ~p~n", [{from, From}]),
+    error_logger:info_msg("Interps: ~p~n", [{interps, ets:lookup(Interps, interp)}]),
+
+    case length(ets:match_object(Interps, {interp, From})) of 
+        0 ->
+            {reply, {ok, false}, Interps};
+        _ ->
+            {reply, {ok, true}, Interps}
+    end;            
+
+
 handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
