@@ -10,6 +10,8 @@
 
 -define(VARNAME_AMI_NAME, "__erlami-name").
 
+-define(AMI_SOCKET_RETRY, 5000).
+
 -record(client_session, {
 		conn,
 		username,
