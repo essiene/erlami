@@ -49,6 +49,8 @@
         amiopts_get/3
     ]).
 
+-include("ami.hrl").
+
 connect(Address, Port, Opts0) ->
     {Opts1, Username} = amiopts_get(Opts0, ami_username),
     {Opts2, Secret} = amiopts_get(Opts1, ami_secret),
@@ -61,7 +63,7 @@ connect(Address, Port, Opts0) ->
 % gen_fsm callbacks
 
 init([Username, Secret, WaitRetry, Address, Port, Options]) ->
-    St = #ami_socket{
+    St = #ami_socket_state{
         username=Username,
         secret=Secret,
         host=Address,
@@ -89,9 +91,9 @@ code_change(_OldVsn, StateName, St, _Extra) ->
     {next_state, StateName, St}.
 
 
-amiopts_get(List, Key, Default) ->
+amiopts_get(List0, Key, Default) ->
     try
-        amiopts_get(List, Key)
+        amiopts_get(List0, Key)
     catch
         throw:{not_found, Key} ->
             List1 = proplists:delete(Key, List0),

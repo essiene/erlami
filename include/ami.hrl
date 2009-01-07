@@ -28,7 +28,7 @@
         senders=undefined
     }).
 
--record(ami_socket, {
+-record(ami_socket_state, {
         username,
         secret,
         host,
