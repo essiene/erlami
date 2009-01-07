@@ -25,7 +25,8 @@
 -behaviour(gen_fsm).
 
 -export([
-        connect/3
+        connect/3,
+        settings/1
 %        connect/4,
 %        send/2,
 %        recv/2,
@@ -59,6 +60,9 @@ connect(Address, Port, Opts0) ->
             {error, Reason}
     end.
 
+settings(S) when is_record(S, ami_socket) ->
+    gen_fsm:sync_send_all_state_event(S#ami_socket.pid, settings).
+
 
 
 
@@ -76,6 +80,17 @@ init([Username, Secret, WaitRetry, Address, Port, Options]) ->
 
     gen_fsm:send_event_after(500, connect),
     {ok, disconnected, St}.
+
+handle_sync_event(settings, _From, StateName, St) ->
+    Settings = [{username, St#ami_socket_state.username},
+        {secret, St#ami_socket_state.secret},
+        {host, St#ami_socket_state.host},
+        {port, St#ami_socket_state.port},
+        {opts, St#ami_socket_state.opts},
+        {wait_retry, St#ami_socket_state.wait_retry}
+    ],
+
+    {reply, {ok, Settings}, StateName, St};
 
 handle_sync_event(Event, _From, StateName, St) ->
     {reply, {illegal_event, Event}, StateName, St}.
