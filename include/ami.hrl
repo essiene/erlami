@@ -26,12 +26,12 @@
         senders=undefined
     }).
 
--recorc(ami_socket, {
+-record(ami_socket, {
         username,
         secret,
         host,
         port,
         opts,
         wait_retry,
-        sock=undefined,
+        sock=undefined
     }).
