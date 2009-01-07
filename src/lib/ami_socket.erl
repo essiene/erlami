@@ -25,7 +25,7 @@
 -behaviour(gen_fsm).
 
 -export([
-%        connect/3
+        connect/3
 %        connect/4,
 %        send/2,
 %        recv/2,
@@ -44,10 +44,34 @@
         code_change/4
     ]).
 
+-export([
+        amiopts_get/2, 
+        amiopts_get/3
+    ]).
 
-init([]) ->
-    {ok, disconnected, nil}.
+connect(Address, Port, Opts0) ->
+    {Opts1, Username} = amiopts_get(Opts0, ami_username),
+    {Opts2, Secret} = amiopts_get(Opts1, ami_secret),
+    {Opts3, WaitRetry} = amiopts_get(Opts2, ami_retry, ?AMI_SOCKET_RETRY),
 
+    gen_fsm:start(?MODULE, [Username, Secret, WaitRetry, Address, Port, Opts3], []).
+
+
+
+% gen_fsm callbacks
+
+init([Username, Secret, WaitRetry, Address, Port, Options]) ->
+    St = #ami_socket{
+        username=Username,
+        secret=Secret,
+        host=Address,
+        port=Port,
+        opts=Options,
+        wait_retry=WaitRetry
+    },
+
+    gen_fsm:send_event_after(500, connect),
+    {ok, disconnected, St}.
 
 handle_sync_event(Event, _From, StateName, St) ->
     {reply, {illegal_event, Event}, StateName, St}.
@@ -63,3 +87,23 @@ terminate(_Reason, _StateName, _St) ->
 
 code_change(_OldVsn, StateName, St, _Extra) ->
     {next_state, StateName, St}.
+
+
+amiopts_get(List, Key, Default) ->
+    try
+        amiopts_get(List, Key)
+    catch
+        throw:{not_found, Key} ->
+            List1 = proplists:delete(Key, List0),
+            {List1, Default}
+    end.
+
+
+amiopts_get(List0, Key) ->
+    case proplists:lookup(Key, List0) of
+        none ->
+            throw({not_found, Key});
+        {Key, Val} ->
+            List1 = proplists:delete(Key, List0),
+            {List1, Val}
+    end.
