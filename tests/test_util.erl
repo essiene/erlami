@@ -107,3 +107,21 @@ build_chan_var_multiple_test() ->
                 {key2, "val2"},
                 {key3, "val3"}
             ])).
+
+proplists_remove_is_present_no_default_test() ->
+    P0 = [{one, 1}, {two, 2}, {three, 3}],
+    P1 = [{two, 2}, {three, 3}],
+    ?assertEqual({P1, 1}, util:proplists_remove(P0, one)).
+
+proplists_remove_not_present_no_default_test() ->
+    P0 = [{one, 1}, {two, 2}, {three, 3}],
+    ?assertThrow({not_found, four}, util:proplists_remove(P0, four)).
+
+proplists_remove_is_present_with_default_test() ->
+    P0 = [{one, 1}, {two, 2}, {three, 3}],
+    P1 = [{two, 2}, {three, 3}],
+    ?assertEqual({P1, 1}, util:proplists_remove(P0, one, 11)).
+
+proplists_remove_not_present_with_default_test() ->
+    P0 = [{one, 1}, {two, 2}, {three, 3}],
+    ?assertEqual({P0, 4}, util:proplists_remove(P0, four, 4)).
