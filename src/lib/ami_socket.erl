@@ -3,14 +3,17 @@
 % when the endpoint comes back online.
 %
 % States are:
-%   connected : Open and connected to end point
-%               Recv works, Send works, async notifications
-%               recv'd on active|once|true recieves.
-
 %   disconnected: Open but not connected to end point
 %               Recv gives an error (not closed), Send gives
 %               an error, No asnc notifications are recv'd
 %
+%   connecting: Not yet open. Attempting to connect. Not usable.
+%
+%   connected : Open and connected to end point
+%               Recv works, Send works, async notifications
+%               recv'd on active|once|true recieves.
+%
+%   
 %   closed    : Closed and not able to communicate.
 % 
 % This socket mimics the semantics of a normal gen_tcp socket
@@ -34,6 +37,17 @@
 %        controlling_process/2,
 %        close/1,
 %        shutdown/2
+    ]).
+
+-export([
+        disconnected/2,
+        disconnected/3,
+        connecting/2,
+        connecting/3,
+        connected/2,
+        connected/3,
+        closed/2,
+        closed/3
     ]).
 
 -export([
@@ -64,7 +78,39 @@ settings(S) when is_record(S, ami_socket) ->
     gen_fsm:sync_send_all_state_event(S#ami_socket.pid, settings).
 
 
+% gen_fsm states
 
+disconnected(Event, _From, St) ->
+    {reply, {illegal_event, Event}, disconnected, St}.
+
+disconnected(_Event, St) ->
+    {next_state, disconnected, St}.
+
+
+
+connecting(Event, _From, St) ->
+    {reply, {illegal_event, Event}, disconnected, St}.
+
+connecting(_Event, St) ->
+    {next_state, connecting, St}.
+
+
+
+
+connected(Event, _From, St) ->
+    {reply, {illegal_event, Event}, disconnected, St}.
+
+connected(_Event, St) ->
+    {next_state, sconnected, St}.
+
+
+
+
+closed(_Event, _From, St) ->
+    {stop, normal, {error, closed}, St}.
+
+closed(_Event, St) ->
+    {stop, normal, St}.
 
 % gen_fsm callbacks
 
