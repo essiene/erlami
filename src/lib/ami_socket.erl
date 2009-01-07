@@ -56,7 +56,14 @@ connect(Address, Port, Opts0) ->
     {Opts2, Secret} = amiopts_get(Opts1, ami_secret),
     {Opts3, WaitRetry} = amiopts_get(Opts2, ami_retry, ?AMI_SOCKET_RETRY),
 
-    gen_fsm:start(?MODULE, [Username, Secret, WaitRetry, Address, Port, Opts3], []).
+    case gen_fsm:start(?MODULE, [Username, Secret, WaitRetry, 
+                Address, Port, Opts3], []) of
+        {ok, Pid} ->
+            {ok, #ami_socket{pid=Pid}};
+        {error, Reason} ->
+            {error, Reason}
+    end.
+
 
 
 

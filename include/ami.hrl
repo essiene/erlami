@@ -37,3 +37,7 @@
         wait_retry,
         sock=undefined
     }).
+
+-record(ami_socket, {
+        pid
+    }).
