@@ -14,6 +14,13 @@
             code_change/3
         ]).
 
+-export([
+            connect/0,
+            disconnect/0,
+            message/1,
+            is_connected/0
+        ]).
+
 
 start_link() ->
     gen_server:start_link({local, ?NAME}, ?MODULE, [], []).
@@ -34,6 +41,9 @@ message(Message) ->
 is_connected() ->
     gen_server:call(?NAME, is_connected).
 
+handle_call(connect, From, Interps) ->
+    ets:insert(Interps, {interp, From}),
+    {reply, {ok, connected}, Interps};
 
 handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
