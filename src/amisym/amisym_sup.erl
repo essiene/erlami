@@ -25,6 +25,7 @@ init(Port) ->
     supervise(Port).
 
 supervise(Port) ->
+    amisym_eventbus:start(),
     Server = amisym_server:start(Port),
     loop(Port, Server).
 
@@ -35,10 +36,11 @@ loop(Port, Server) ->
             From ! server_ping(Server),
             loop(Port, Server);
         {From, stop} ->
-            From ! {?SYM_REG_NAME, stopping},
-            server_stop(Server);
-        {'EXIT', Server, _Reason} ->
-            util:logmessage("Restarting server"),
+            {ok, stopped} = amisym_eventbus:stop(),
+            ok = amisym_server:stop(Server),
+            From ! {?SYM_REG_NAME, ok};
+        {'EXIT', _Any, _Reason} ->
+            util:logmessage("Restarting all"),
             supervise(Port);
         _Any ->
             loop(Port, Server)
@@ -53,9 +55,6 @@ server_ping(ServerPid) ->
             {?SYM_REG_NAME, pang}
     end.
 
-
-server_stop(ServerPid) ->
-    amisym_server:stop(ServerPid).
 
 rpc(Cmd) ->
     case whereis(?SYM_REG_NAME) of

@@ -1,52 +1,44 @@
 -module(test_ami).
 -include_lib("eunit/include/eunit.hrl").
 
+setup_test() ->
+    amisym:start().
+
 login_fail_test() ->
-    amisym:start(),
-    ?assertEqual({error, {login, failed}}, ami:new("localhost", 15038, "test", "test")),
-    amisym:stop().
+    ?assertEqual({error, {login, failed}}, ami:new("localhost", 15038, "test", "test")).
 
 login_ok_test() ->
-    amisym:start(),
     {SessionPid, InterpPid} = ami:new("localhost", 15038, "sym", "sym"),
     ?assert(SessionPid =/= self()),
     ?assertEqual(true, is_pid(SessionPid)),
-    ?assertEqual(true, is_pid(InterpPid)),
-    amisym:stop().
+    ?assertEqual(true, is_pid(InterpPid)).
 
 execute_working_test() ->
-    amisym:start(),
     Ami = ami:new("localhost", 15038, "sym", "sym"), 
-    [{response, "Success"} | _Rest] = ami:execute(Ami, [{action, "login"}]),
-    amisym:stop().
+    [{response, "Success"} | _Rest] = ami:execute(Ami, [{action, "login"}]).
 
 originate_no_number_test() ->
-    amisym:start(),
     Ami = ami:new("localhost", 15038, "sym", "sym"), 
-    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass", local, 111, 1),
-    amisym:stop().
+    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass", local, 111, 1).
 
 originate_prejoined_number_test() ->
-    amisym:start(),
     Ami = ami:new("localhost", 15038, "sym", "sym"), 
-    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass/111222333", local, 111, 1),
-    amisym:stop().
+    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass/111222333", local, 111, 1).
 
 originate_no_prejoined_number_test() ->
-    amisym:start(),
     Ami = ami:new("localhost", 15038, "sym", "sym"), 
-    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass", "111222333", local, 111, 1),
-    amisym:stop().
+    [{response, "Success"} | _Rest] = ami:originate(Ami, "SIP/pass", "111222333", local, 111, 1).
 
 close_test() ->
-    amisym:start(),
     {SessionPid, InterpPid} = Ami = ami:new("localhost", 15038, "sym", "sym"),
     ?assertEqual(true, is_process_alive(SessionPid)),
     ?assertEqual(true, is_process_alive(InterpPid)),
     ami:close(Ami),
     timer:sleep(2000),
     ?assertEqual(false, is_process_alive(SessionPid)),
-    ?assertEqual(false, is_process_alive(InterpPid)),
+    ?assertEqual(false, is_process_alive(InterpPid)).
+
+teardown_test() ->
     amisym:stop().
 
 

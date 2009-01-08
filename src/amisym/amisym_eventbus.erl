@@ -106,7 +106,8 @@ handle_info({'EXIT', Interp, Reason}, Interps) ->
 handle_info(_Info, _State) ->
     ok.
 
-terminate(_Reason, _State) ->
+terminate(_Reason, Interps) ->
+    ets:delete(Interps),
     ok.    
 
 code_change(_OldVsn, State, _Extra) ->

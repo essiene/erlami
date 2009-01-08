@@ -16,11 +16,10 @@ start(Port) ->
     spawn_link(?MODULE, init, [Server]).
 
 stop(ServerPid) ->
-    ServerPid ! close.
+    ServerPid ! close,
+    ok.
 
 init(Server) ->
-    process_flag(trap_exit, true),
-    amisym_eventbus:start(),
     serve(Server, []).
 
 serve(Server, SessionList) ->
@@ -43,7 +42,6 @@ serve(Server, SessionList) ->
             Type: Exception ->
                 {Type, Exception}
         after
-            gen_tcp:close(Server),
-            amisym_eventbus:stop()
+            gen_tcp:close(Server)
         end
    end.
