@@ -33,7 +33,13 @@ init(_Arg) ->
 
 
 start() ->
-    start_link().
+    case start_link() of 
+        {ok, _Pid} ->
+            {ok, started};
+        {error, {already_started, _Pid}} ->
+            {ok, already_running}
+    end.   
+            
 
 stop() ->
     gen_server:call(?NAME, {stop}).
@@ -75,9 +81,6 @@ handle_call({message, Message}, _From, Interps) ->
     {reply, {ok, sent}, Interps};        
 
 handle_call({is_connected, Pid}, _From, Interps) ->
-
-    error_logger:info_msg("From: ~p~n", [{from, Pid}]),
-    error_logger:info_msg("Interps: ~p~n", [{interps, ets:lookup(Interps, interp)}]),
 
     case length(ets:match_object(Interps, {interp, Pid})) of 
         0 ->
