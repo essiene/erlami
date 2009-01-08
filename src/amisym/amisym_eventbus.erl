@@ -33,7 +33,13 @@ init(_Arg) ->
 
 
 start() ->
-    start_link().
+    case start_link() of 
+        {ok, _Pid} ->
+            {ok, started};
+        {error, {already_started, _Pid}} ->
+            {ok, already_running}
+    end.   
+            
 
 stop() ->
     gen_server:call(?NAME, {stop}).
