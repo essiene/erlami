@@ -8,14 +8,14 @@ amisym_eventbus_init_test() ->
 
 amisym_eventbus_connect_test() ->
     amisym_eventbus:start_link(),
-    ?assertEqual({ok, connected}, amisym_eventbus:connect()).
+    ?assertEqual({ok, connected}, amisym_eventbus:connect(self())).
 
 amisym_eventbus_disconnect_test() ->
     amisym_eventbus:start_link(),
-    amisym_eventbus:connect(),
-    ?assertEqual({ok, deleted}, amisym_eventbus:disconnect()).
+    amisym_eventbus:connect(self()),
+    ?assertEqual({ok, deleted}, amisym_eventbus:disconnect(self())).
 
 amisym_eventbus_is_connected_test() ->
     amisym_eventbus:start_link(),
-    amisym_eventbus:connect(),
-    ?assertEqual({ok, true}, amisym_eventbus:is_connected()).
+    amisym_eventbus:connect(self()),
+    ?assertEqual({ok, true}, amisym_eventbus:is_connected(self())).

@@ -15,10 +15,10 @@
         ]).
 
 -export([
-            connect/0,
-            disconnect/0,
+            connect/1,
+            disconnect/1,
             message/1,
-            is_connected/0
+            is_connected/1
         ]).
 
 
@@ -29,17 +29,17 @@ init(_Arg) ->
     Interps = ets:new(amisym_interps, [bag, private]),
     {ok, Interps}.
 
-connect() ->
-    gen_server:call(?NAME, {connect, self()}).    
+connect(Pid) ->
+    gen_server:call(?NAME, {connect, Pid}).    
 
-disconnect() ->
-    gen_server:call(?NAME, {disconnect, self()}).
+disconnect(Pid) ->
+    gen_server:call(?NAME, {disconnect, Pid}).
 
 message(Message) ->
     gen_server:call(?NAME, {message, Message}).    
 
-is_connected() ->
-    gen_server:call(?NAME, {is_connected, self()}).
+is_connected(Pid) ->
+    gen_server:call(?NAME, {is_connected, Pid}).
 
 handle_call({connect, Pid}, _From, Interps) ->
     ets:insert(Interps, {interp, Pid}),
@@ -54,10 +54,6 @@ handle_call({disconnect, Pid}, _From, Interps) ->
     end;            
 
 handle_call({is_connected, Pid}, _From, Interps) ->
-
-    error_logger:info_msg("From: ~p~n", [{from, Pid}]),
-    error_logger:info_msg("Interps: ~p~n", [{interps, ets:lookup(Interps, interp)}]),
-
     case length(ets:match_object(Interps, {interp, Pid})) of 
         0 ->
             {reply, {ok, false}, Interps};
@@ -71,6 +67,14 @@ handle_call(_Msg, _From, State) ->
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
+
+handle_info({'EXIT', _Interp, killed}, _Interps) ->
+    just_die;
+
+handle_info({'EXIT', Interp, Reason}, Interps) ->
+    util:logmessage({{disconnected, Interp}, {reason, Reason}}),
+    ets:delete(Interps, {interps, Interp}),
+    {ok, deleted};
 
 handle_info(_Info, _State) ->
     ok.
