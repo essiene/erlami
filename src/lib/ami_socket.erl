@@ -28,7 +28,7 @@
 -export([
         connect/3,
         connect/4,
-        settings/1
+        getopts/2
 %        connect/4,
 %        send/2,
 %        recv/2,
@@ -41,8 +41,6 @@
 -export([
         disconnected/2,
         disconnected/3,
-        connecting/2,
-        connecting/3,
         connected/2,
         connected/3,
         closed/2,
@@ -73,8 +71,10 @@ connect(Address, Port, Opts0, Timeout) ->
             {error, Reason}
     end.
 
-settings(S) when is_record(S, ami_socket) ->
-    gen_fsm:sync_send_all_state_event(S#ami_socket.pid, settings).
+getopts(Sock, Opts) when is_record(Sock, ami_socket) ->
+    gen_fsm:sync_send_all_state_event(Sock#ami_socket.pid, {getopts, Opts});
+getopts(St, Opts) ->
+    getopts(St, Opts, []).
 
 
 % gen_fsm states
@@ -128,15 +128,8 @@ init([WaitRetry, Address, Port, Options, Timeout]) ->
     gen_fsm:send_event_after(500, {connect, Timeout}),
     {ok, disconnected, St}.
 
-handle_sync_event(settings, _From, StateName, St) ->
-    Settings = [{host, St#ami_socket_state.host},
-        {port, St#ami_socket_state.port},
-        {opts, St#ami_socket_state.opts},
-        {wait_retry, St#ami_socket_state.wait_retry},
-        {state, StateName}
-    ],
-
-    {reply, {ok, Settings}, StateName, St};
+handle_sync_event({getopts, Opts}, _From, StateName, St) ->
+    {reply, getopts(St, Opts), StateName, St};
 
 handle_sync_event(Event, _From, StateName, St) ->
     {reply, {illegal_event, Event}, StateName, St}.
@@ -152,3 +145,28 @@ terminate(_Reason, _StateName, _St) ->
 
 code_change(_OldVsn, StateName, St, _Extra) ->
     {next_state, StateName, St}.
+
+
+
+getopts(_St, [], Accm) ->
+    {ok, lists:reverse(Accm)};
+getopts(St, [ami_host | Rest], Accm) ->
+    getopts(St, Rest, [{ami_host, St#ami_socket_state.host} | Accm]);
+getopts(St, [ami_port | Rest], Accm) ->
+    getopts(St, Rest, [{ami_port , St#ami_socket_state.port} | Accm]);
+getopts(St, [ami_retry | Rest], Accm) ->
+    getopts(St, Rest, [{ami_retry, St#ami_socket_state.wait_retry} | Accm]);
+getopts(#ami_socket_state{sock=undefined}=St, [Other | Rest], Accm) ->
+    case proplists:lookup(Other, St#ami_socket_state.opts) of
+        none -> 
+            {error, einval};
+        {Other, Value} ->
+            getopts(St, Rest, [{Other, Value} | Accm])
+    end;
+getopts(St, [Other | Rest], Accm) ->
+    case inet:getopts(St#ami_socket_state.sock, [Other]) of
+        {ok, [{Other, Value}]} ->
+            getopts(St, Rest, [{Other, Value} | Accm]); 
+        {error, Reason} ->
+            {error, Reason}
+    end.
