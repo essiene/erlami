@@ -15,6 +15,9 @@
         ]).
 
 -export([
+            start/0,
+            stop/0,
+            init/0,
             connect/0,
             disconnect/0,
             message/1,
@@ -26,8 +29,18 @@ start_link() ->
     gen_server:start_link({local, ?NAME}, ?MODULE, [], []).
 
 init(_Arg) ->
+    init().
+
+init() ->
     Interps = ets:new(amisym_interps, [bag, private]),
     {ok, Interps}.
+
+
+start() ->
+    start_link().
+
+stop() ->
+    gen_server:call(?NAME, {stop}).
 
 connect() ->
     gen_server:call(?NAME, {connect, self()}).    
@@ -41,6 +54,9 @@ message(Message) ->
 is_connected() ->
     gen_server:call(?NAME, {is_connected, self()}).
 
+handle_call({stop}, _From, Interps) ->
+    {reply, {ok, stopped}, Interps};
+
 handle_call({connect, Pid}, _From, Interps) ->
     ets:insert(Interps, {interp, Pid}),
     {reply, {ok, connected}, Interps};
@@ -52,6 +68,11 @@ handle_call({disconnect, Pid}, _From, Interps) ->
         false ->
             {reply, {error, not_found}, Interps}
     end;            
+
+handle_call({message, Message}, _From, Interps) ->
+    AllInterps = ets:lookup(Interps, interp),
+    lists:foreach(fun({interp, Interp}) -> interp:cast(Interp, {?NAME, Message}) end, AllInterps),
+    {reply, {ok, sent}, Interps};        
 
 handle_call({is_connected, Pid}, _From, Interps) ->
 
