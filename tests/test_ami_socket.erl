@@ -4,6 +4,6 @@
 
 
 connect_test() ->
-    {ok, Sock} = ami_socket:connect("localhost", 1, [inet, binary, {active, false}, {ami_username, "user"}, {ami_secret, "secret"}]),
+    {ok, Sock} = ami_socket:connect("localhost", 1, [inet, binary, {active, false}]),
     ?assertEqual(true, is_record(Sock, ami_socket)),
     ?assertEqual(true, is_process_alive(Sock#ami_socket.pid)).

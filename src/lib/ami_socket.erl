@@ -29,6 +29,7 @@
 
 -export([
         connect/3,
+        connect/4,
         settings/1
 %        connect/4,
 %        send/2,
@@ -61,13 +62,13 @@
 
 -include("ami.hrl").
 
-connect(Address, Port, Opts0) ->
-    {Opts1, Username} = util:proplists_remove(Opts0, ami_username),
-    {Opts2, Secret} = util:proplists_remove(Opts1, ami_secret),
-    {Opts3, WaitRetry} = util:proplists_remove(Opts2, ami_retry, ?AMI_SOCKET_RETRY),
+connect(Address, Port, Opts) ->
+    connect(Address, Port, Opts, infinity).
 
-    case gen_fsm:start(?MODULE, [Username, Secret, WaitRetry, 
-                Address, Port, Opts3], []) of
+connect(Address, Port, Opts0, Timeout) ->
+    {Opts1, WaitRetry} = util:proplists_remove(Opts0, ami_retry, ?AMI_SOCKET_RETRY),
+
+    case gen_fsm:start(?MODULE, [WaitRetry, Address, Port, Opts1, Timeout], []) of
         {ok, Pid} ->
             {ok, #ami_socket{pid=Pid}};
         {error, Reason} ->
@@ -83,6 +84,17 @@ settings(S) when is_record(S, ami_socket) ->
 disconnected(Event, _From, St) ->
     {reply, {illegal_event, Event}, disconnected, St}.
 
+
+disconnected({connect, Timeout}, #ami_socket_state{host=Host, port=Port, opts=Opts}=St) ->
+    case gen_tcp:connect(Host, Port, Opts, Timeout) of
+        {ok, Sock} ->
+            {next_state, connected, St#ami_socket_state{sock=Sock}};
+        {error, Reason} ->
+            error_logger:error_report([ami_socket, {state, disconnected}, {error, Reason}]),
+            gen_fsm:send_event_after(St#ami_socket_state.wait_retry, {connect, Timeout}),
+            {next_state, disconnected, St}
+    end;
+
 disconnected(_Event, St) ->
     {next_state, disconnected, St}.
 
@@ -96,12 +108,11 @@ connecting(_Event, St) ->
 
 
 
-
 connected(Event, _From, St) ->
     {reply, {illegal_event, Event}, disconnected, St}.
 
 connected(_Event, St) ->
-    {next_state, sconnected, St}.
+    {next_state, connected, St}.
 
 
 
@@ -114,23 +125,19 @@ closed(_Event, St) ->
 
 % gen_fsm callbacks
 
-init([Username, Secret, WaitRetry, Address, Port, Options]) ->
+init([WaitRetry, Address, Port, Options, Timeout]) ->
     St = #ami_socket_state{
-        username=Username,
-        secret=Secret,
         host=Address,
         port=Port,
         opts=Options,
         wait_retry=WaitRetry
     },
 
-    gen_fsm:send_event_after(500, connect),
+    gen_fsm:send_event_after(500, {connect, Timeout}),
     {ok, disconnected, St}.
 
 handle_sync_event(settings, _From, StateName, St) ->
-    Settings = [{username, St#ami_socket_state.username},
-        {secret, St#ami_socket_state.secret},
-        {host, St#ami_socket_state.host},
+    Settings = [{host, St#ami_socket_state.host},
         {port, St#ami_socket_state.port},
         {opts, St#ami_socket_state.opts},
         {wait_retry, St#ami_socket_state.wait_retry},
