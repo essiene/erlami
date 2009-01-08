@@ -75,10 +75,6 @@ handle_call({message, Message}, _From, Interps) ->
     {reply, {ok, sent}, Interps};        
 
 handle_call({is_connected, Pid}, _From, Interps) ->
-
-    error_logger:info_msg("From: ~p~n", [{from, Pid}]),
-    error_logger:info_msg("Interps: ~p~n", [{interps, ets:lookup(Interps, interp)}]),
-
     case length(ets:match_object(Interps, {interp, Pid})) of 
         0 ->
             {reply, {ok, false}, Interps};
@@ -92,6 +88,14 @@ handle_call(_Msg, _From, State) ->
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
+
+handle_info({'EXIT', _Interp, killed}, _Interps) ->
+    just_die;
+
+handle_info({'EXIT', Interp, Reason}, Interps) ->
+    util:logmessage({{disconnected, Interp}, {reason, Reason}}),
+    ets:delete(Interps, {interps, Interp}),
+    {ok, deleted};
 
 handle_info(_Info, _State) ->
     ok.
