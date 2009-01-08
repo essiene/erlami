@@ -7,7 +7,10 @@ $(EBIN_DIR)/%.beam: %.erl
 	erlc $(ERL_FLAGS) $<
 
 
-OBJECTS=test_amisym_eventbus
+OBJECTS=test_util test_amilist \
+		test_messaging  test_amisym_eventbus \
+		test_amievent_manager test_amisym \
+		test_ami
 
 
 test: compile

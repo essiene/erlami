@@ -31,16 +31,16 @@ start_link() ->
 init(_Arg) ->
     init().
 
-init() ->
-    Interps = ets:new(amisym_interps, [bag, private]),
-    {ok, Interps}.
-
 
 start() ->
     start_link().
 
 stop() ->
     gen_server:call(?NAME, {stop}).
+
+init() ->
+    Interps = ets:new(amisym_interps, [bag, private]),
+    {ok, Interps}.
 
 connect() ->
     gen_server:call(?NAME, {connect, self()}).    
