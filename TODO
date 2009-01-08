@@ -11,5 +11,4 @@
 
   And not just ets, but lots of other low-level modules
 
-- amisym_eventbus should be a gen_server
 - complete otp migration all thru the library

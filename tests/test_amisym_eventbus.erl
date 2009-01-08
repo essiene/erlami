@@ -2,7 +2,6 @@
 -include_lib("eunit/include/eunit.hrl").
 
 
-
 amisym_eventbus_new_test() ->
     ?assertEqual({ok, started}, amisym_eventbus:start()),
     Result = whereis(amisym_eventbus),

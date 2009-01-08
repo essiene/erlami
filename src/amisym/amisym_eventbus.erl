@@ -1,91 +1,113 @@
 -module(amisym_eventbus).
+
+-behaviour(gen_server).
+
+-define(NAME, ?MODULE).
+
 -export([
-        start/0,
-        stop/0,
-        init/0,
-        connect/0,
-        disconnect/0,
-        message/1,
-        is_connected/0
-    ]).
+            start_link/0,
+            init/1,
+            handle_call/3,
+            handle_cast/2,
+            handle_info/2,
+            terminate/2,
+            code_change/3
+        ]).
+
+-export([
+            start/0,
+            stop/0,
+            init/0,
+            connect/0,
+            disconnect/0,
+            message/1,
+            is_connected/0
+        ]).
+
+
+start_link() ->
+    gen_server:start_link({local, ?NAME}, ?MODULE, [], []).
+
+init(_Arg) ->
+    init().
 
 
 start() ->
-    case whereis(amisym_eventbus) of
-        undefined -> 
-            register(amisym_eventbus, spawn_link(?MODULE, init, [])),
+    case start_link() of 
+        {ok, _Pid} ->
             {ok, started};
-        _ ->
+        {error, {already_started, _Pid}} ->
             {ok, already_running}
-    end.
+    end.   
+            
 
 stop() ->
-    rpc({cmd, stop}).
-
-
-rpc(Command) ->
-    case whereis(amisym_eventbus) of
-        undefined ->
-            {error, not_running};
-        _ ->
-            amisym_eventbus ! {self(), Command},
-            receive
-                Response ->
-                    Response
-            end
-    end.
-
-connect() ->
-    rpc({cmd, connect}).
-
-disconnect() ->
-    rpc({cmd, disconnect}).
-
-message(Message) ->
-    rpc({cmd, {message, Message}}).
-
-is_connected() ->
-    rpc({cmd, is_connected}).
+    gen_server:call(?NAME, {stop}).
 
 init() ->
-    process_flag(trap_exit, true),
     Interps = ets:new(amisym_interps, [bag, private]),
-    loop(Interps).
+    {ok, Interps}.
 
-loop(Interps) ->
-    receive
-        {'EXIT', _Interp, killed} ->
-            just_die;
-        {'EXIT', Interp, Reason} ->
-            util:logmessage({{disconnected, Interp}, {reason, Reason}}),
-            ets:delete(Interps, {interp, Interp}),
-            loop(Interps);
-        {From, {cmd, disconnect}} ->
-            ets:delete_object(Interps, {interp, From}),
-            From ! {ok, deleted},
-            loop(Interps);
-        {From, {cmd, connect}} ->
-            ets:insert(Interps, {interp, From}),
-            link(From),
-            From ! {ok, connected},
-            loop(Interps);
-        {From, {cmd, {message, Message}}} ->
-            AllInterps = ets:lookup(Interps, interp),
-            lists:foreach(fun({interp, Interp}) -> interp:cast(Interp, {amisym_eventbus, Message}) end, AllInterps),
-            From ! {ok, sent},
-            loop(Interps);
-        {From, {cmd, is_connected}} ->
-            case length(ets:match_object(Interps, {interp, From})) of
-                0 ->
-                    From ! {ok, false},
-                    loop(Interps);
-                _ ->
-                    From ! {ok, true},
-                    loop(Interps)
-            end;
-        {From, {cmd, stop}} ->
-            From ! {ok, stopped};
-        Any ->
-            util:logmessage({unexpected, Any}),
-            loop(Interps)
-    end.
+connect() ->
+    gen_server:call(?NAME, {connect, self()}).    
+
+disconnect() ->
+    gen_server:call(?NAME, {disconnect, self()}).
+
+message(Message) ->
+    gen_server:call(?NAME, {message, Message}).    
+
+is_connected() ->
+    gen_server:call(?NAME, {is_connected, self()}).
+
+handle_call({stop}, _From, Interps) ->
+    {reply, {ok, stopped}, Interps};
+
+handle_call({connect, Pid}, _From, Interps) ->
+    ets:insert(Interps, {interp, Pid}),
+    {reply, {ok, connected}, Interps};
+
+handle_call({disconnect, Pid}, _From, Interps) ->
+    case ets:delete_object(Interps, {interp, Pid}) of
+        true ->
+            {reply, {ok, deleted}, Interps};
+        false ->
+            {reply, {error, not_found}, Interps}
+    end;            
+
+handle_call({message, Message}, _From, Interps) ->
+    AllInterps = ets:lookup(Interps, interp),
+    lists:foreach(fun({interp, Interp}) -> interp:cast(Interp, {?NAME, Message}) end, AllInterps),
+    {reply, {ok, sent}, Interps};        
+
+handle_call({is_connected, Pid}, _From, Interps) ->
+    case length(ets:match_object(Interps, {interp, Pid})) of 
+        0 ->
+            {reply, {ok, false}, Interps};
+        _ ->
+            {reply, {ok, true}, Interps}
+    end;            
+
+
+handle_call(_Msg, _From, State) ->
+    {reply, ok, State}.
+
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+handle_info({'EXIT', _Interp, killed}, _Interps) ->
+    just_die;
+
+handle_info({'EXIT', Interp, Reason}, Interps) ->
+    util:logmessage({{disconnected, Interp}, {reason, Reason}}),
+    ets:delete(Interps, {interps, Interp}),
+    {ok, deleted};
+
+handle_info(_Info, _State) ->
+    ok.
+
+terminate(_Reason, _State) ->
+    ok.    
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
