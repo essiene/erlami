@@ -7,8 +7,6 @@
 %               Recv gives an error (not closed), Send gives
 %               an error, No asnc notifications are recv'd
 %
-%   connecting: Not yet open. Attempting to connect. Not usable.
-%
 %   connected : Open and connected to end point
 %               Recv works, Send works, async notifications
 %               recv'd on active|once|true recieves.
@@ -99,12 +97,6 @@ disconnected(_Event, St) ->
     {next_state, disconnected, St}.
 
 
-
-connecting(Event, _From, St) ->
-    {reply, {illegal_event, Event}, disconnected, St}.
-
-connecting(_Event, St) ->
-    {next_state, connecting, St}.
 
 
 
