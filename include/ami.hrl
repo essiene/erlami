@@ -10,6 +10,9 @@
 
 -define(VARNAME_AMI_NAME, "__erlami-name").
 
+-define(LISTENER, amisym_server).
+-define(CLIENT_SUP, amisym_client_sup).
+
 -record(client_session, {
 		conn,
 		username,

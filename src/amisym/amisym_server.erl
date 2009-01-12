@@ -1,27 +1,52 @@
 -module(amisym_server).
+
+-behaviour(gen_listener_tcp).
+
+-include("ami.hrl").
+
 -export([
         start/0,
         start/1,
         stop/1,
-        init/1,
         serve/2
     ]).
 
+-export([
+            init/1
+        ]).
+
 
 start() ->
-    start(15038).
+    gen_listener_tcp:start({local, ?LISTENER}, ?MODULE, [erlcfg:new()], []). 
 
-start(Port) ->
-    Server = amitcp:create_server(Port),
-    spawn_link(?MODULE, init, [Server]).
+start(Port) when is_integer(Port) ->
+    gen_listener_tcp:start({local, ?LISTENER}, ?MODULE, [Port, 10], []);
 
-stop(ServerPid) ->
-    ServerPid ! close,
-    ok.
+start(Config) when is_tuple(Config) ->
+    gen_listener_tcp:start_link({local, ?LISTENER}, ?MODULE, [Config], []).
 
-init(Server) ->
-    serve(Server, []).
+init([{_Port, _Backlog}]) ->
+    ok;
 
+init([Config]) ->
+    {ok, {
+            Config:get(server.port, 15038),
+            [
+                binary,
+                inet, 
+                {active, false},
+                {backlog, config:get(server.backlog, 10)},
+                {reuseaddr, true}
+            ],
+            
+            {
+                amisym_client_sup,
+                start_child,
+                []
+            }
+         }
+    }.
+                
 serve(Server, SessionList) ->
     receive
         close ->
