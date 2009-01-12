@@ -28,11 +28,11 @@ init([]) ->
             [
                 {
                     amisym_client_sup,
-                    {amisym_client_fsm, start_link, []},
+                    {amisym_session, new, []},
                     transient,
                     5000,
                     worker,
-                    [amisym_client_fsm]
+                    [amisym_session]
                 }
             ]
         }

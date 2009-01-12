@@ -25,17 +25,20 @@ start(Port) when is_integer(Port) ->
 start(Config) when is_tuple(Config) ->
     gen_listener_tcp:start_link({local, ?LISTENER}, ?MODULE, [Config], []).
 
-init([{_Port, _Backlog}]) ->
-    ok;
+stop(ServerPid) ->
+    gen_listener_tcp:stop({local, ?LISTENER}).    
 
-init([Config]) ->
+init([Config]) -> 
+    init(Config:get(server.port, 15038), Config:get(server.backlog, 10)).
+
+init(Port, Backlog) ->
     {ok, {
-            Config:get(server.port, 15038),
+            Port,
             [
                 binary,
                 inet, 
                 {active, false},
-                {backlog, config:get(server.backlog, 10)},
+                {backlog, Backlog},
                 {reuseaddr, true}
             ],
             
@@ -46,27 +49,3 @@ init([Config]) ->
             }
          }
     }.
-                
-serve(Server, SessionList) ->
-    receive
-        close ->
-            lists:foreach(
-                fun(S) -> amisym_session:close(S) end,
-                SessionList
-            ),
-            exit(normal);
-        _Any ->
-            do_nothing
-    after 0 ->
-        try
-            Client = amitcp:wait_for_connection(Server),
-            Session = amisym_session:new(Client),
-            NewSessionList = [Session | SessionList],
-            serve(Server, NewSessionList)
-        catch
-            Type: Exception ->
-                {Type, Exception}
-        after
-            gen_tcp:close(Server)
-        end
-   end.

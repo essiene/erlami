@@ -12,6 +12,7 @@
 
 -define(LISTENER, amisym_server).
 -define(CLIENT_SUP, amisym_client_sup).
+-define(?EVENT_BUS, amisym_eventbus).
 
 -record(client_session, {
 		conn,
