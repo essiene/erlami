@@ -26,7 +26,9 @@
 
 
 start_link() ->
-    gen_server:start_link({local, ?NAME}, ?MODULE, [], []).
+    Res = gen_server:start_link({local, ?NAME}, ?MODULE, [], []),
+    error_logger:info_report({?MODULE, started}),
+    Res.
 
 init(_Arg) ->
     init().

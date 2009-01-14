@@ -1,69 +1,59 @@
 -module(amisym_sup).
+
+-behaviour(supervisor).
+
 -export([
-        start/0,
-        start/1,
-        init/1,
-        rpc/1
-    ]).
+            start/0,
+            start/1,
+            start_link/1,
+            stop/0,
+            stop/1,
+            init/1            
+        ]).
+
 -include("ami.hrl").
 
+
+start_link(Config) when is_tuple(Config) ->
+    supervisor:start_link({local, ?SUPERVISOR}, ?MODULE, [Config]).
+
+start(Config) when is_tuple(Config) ->
+    start_link(Config).
+        
 start() ->
-    start(15038).
+    start(erlcfg:new()).
 
-start(Port) ->
-    case whereis(?SYM_REG_NAME) of
-        undefined -> 
-            register(?SYM_REG_NAME, spawn(?MODULE, init, [Port])),
-            {ok, started};
-        _ ->
-            {ok, already_running}
-    end.
+stop() ->
+    exit(?SUPERVISOR, normal).
 
+stop(Pid) ->
+    exit(Pid, normal).
 
-init(Port) ->
-    process_flag(trap_exit, true),
-    supervise(Port).
+init([Config]) ->
+    error_logger:info_report({in_init_supervisor}),
+    application:start(crypto),
+    application:start(inets),
 
-supervise(Port) ->
-    amisym_eventbus:start(),
-    Server = amisym_server:start(Port),
-    loop(Port, Server).
+    ClientSup = {?CLIENT_SUP, 
+        {amisym_client_sup, start_link, []},
+        permanent, 5000, supervisor, [amisym_client_sup]
+    },
 
+    Listener = {?LISTENER,
+        {amisym_server, start_link, [Config]},
+        permanent, 5000, worker, [amisym_server]
+    },
 
-loop(Port, Server) ->
-    receive
-        {From, ping} ->
-            From ! server_ping(Server),
-            loop(Port, Server);
-        {From, stop} ->
-            {ok, stopped} = amisym_eventbus:stop(),
-            ok = amisym_server:stop(Server),
-            From ! {?SYM_REG_NAME, ok};
-        {'EXIT', _Any, _Reason} ->
-            util:logmessage("Restarting all"),
-            supervise(Port);
-        _Any ->
-            loop(Port, Server)
-    end.
+    EventBus = {?EVENT_BUS, 
+        {amisym_eventbus, start_link, []},
+        permanent, 5000, worker, [amisym_eventbus]
+    },
 
 
-server_ping(ServerPid) ->
-    case is_process_alive(ServerPid) of
-        true ->
-            {?SYM_REG_NAME, pong};
-        false ->
-            {?SYM_REG_NAME, pang}
-    end.
-
-
-rpc(Cmd) ->
-    case whereis(?SYM_REG_NAME) of
-        undefined ->
-            {error, not_alive};
-        _Pid ->
-            ?SYM_REG_NAME ! {self(), Cmd},
-            receive
-                {?SYM_REG_NAME, Response} ->
-                    Response
-            end
-    end.
+    {
+        ok, 
+        {
+            {one_for_one, 3, 10},
+            [EventBus, ClientSup, Listener]
+        }
+    }.

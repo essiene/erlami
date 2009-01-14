@@ -21,7 +21,9 @@
 new(Client) ->
     case gen_server:start_link(?MODULE, Client, []) of
         {ok, SessionPid} ->
+            error_logger:info_report([amisym_session, {pid, SessionPid}, {action, controlling_process}]),
             amitcp:set_controlling_process(Client, SessionPid),
+            error_logger:info_report([amisym_session, {controlling_process, ok}]),
             SessionPid;
         Any ->
             Any

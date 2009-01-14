@@ -1,7 +1,7 @@
 -module(amisym_client_sup).
 -behaviour(supervisor).
 
--include("ami.hrl")
+-include("ami.hrl").
 
 -export([
             start_link/0,
@@ -14,8 +14,8 @@
 
 
 start_link() ->
-    Res = supervisor:start_link({?local, ?CLIENT_SUP}, ?MODULE, []),
-    error:logger:info_report({?MODULE, started}),
+    Res = supervisor:start_link({local, ?CLIENT_SUP}, ?MODULE, []),
+    error_logger:info_report({?MODULE, started}),
     Res.
 
 start_child(ClientSocket) ->

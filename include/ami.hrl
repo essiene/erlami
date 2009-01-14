@@ -11,8 +11,9 @@
 -define(VARNAME_AMI_NAME, "__erlami-name").
 
 -define(LISTENER, amisym_server).
+-define(EVENT_BUS, amisym_eventbus).
 -define(CLIENT_SUP, amisym_client_sup).
--define(?EVENT_BUS, amisym_eventbus).
+-define(SUPERVISOR, amisym_sup).
 
 -record(client_session, {
 		conn,

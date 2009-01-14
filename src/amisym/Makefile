@@ -11,7 +11,7 @@ $(EBIN_DIR)/%.beam:  %.erl
 OBJECTS= gen_listener_tcp amisym_interp amisym_session \
 		amisym_server amisym_sup \
 		amisym_eventbus amisym_actions \
-		amisym
+		amisym amisym_client_sup
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}

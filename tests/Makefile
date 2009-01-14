@@ -10,7 +10,7 @@ $(EBIN_DIR)/%.beam: %.erl
 OBJECTS=test_util test_amilist \
 		test_messaging  test_amisym_eventbus \
 		test_amievent_manager test_amisym \
-		test_ami
+		test_ami test_amisym_server
 
 
 test: compile
