@@ -1,22 +1,19 @@
 -module(amisym).
 -export([
-        start/1,
+        start/2,
         start/0,
-        stop/0,
-        ping/0
+        stop/1
     ]).
 
--include("ami.hrl").
+-behaviour(application).
 
+start(_Type, StartArgs) ->
+    Res = amisym_sup:start(StartArgs),
+    error_logger:info_report({application_started, ?MODULE}),
+    Res.
+
+stop(_State) ->
+    amisym_sup:stop().
 
 start() ->
-    amisym_sup:start().
-
-start(Port) ->
-    amisym_sup:start(Port).
-
-stop() ->
-    amisym_sup:rpc(stop).
-
-ping() ->
-    amisym_sup:rpc(ping).
+    start(normal, []).

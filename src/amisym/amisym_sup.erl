@@ -8,8 +8,9 @@
             start_link/1,
             stop/0,
             stop/1,
-            init/1            
-        ]).
+            init/1,
+        ping/0
+    ]).
 
 -include("ami.hrl").
 
@@ -18,16 +19,23 @@ start_link(Config) when is_tuple(Config) ->
     supervisor:start_link({local, ?SUPERVISOR}, ?MODULE, [Config]).
 
 start(Config) when is_tuple(Config) ->
-    start_link(Config).
-        
+    start_link(Config);
+
+start([]) ->
+    start().
+    
 start() ->
     start(erlcfg:new()).
+
 
 stop() ->
     exit(?SUPERVISOR, normal).
 
 stop(Pid) ->
     exit(Pid, normal).
+
+ping() ->
+    pong.
 
 init([Config]) ->
     error_logger:info_report({in_init_supervisor}),

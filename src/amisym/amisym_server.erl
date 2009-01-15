@@ -65,7 +65,7 @@ init(Port, Backlog) ->
     }.
 
 handle_accept(Sock, State) ->
-    Res = amisym_client_sup:start_child(Sock),
+    amisym_client_sup:start_child(Sock),
     {noreply, State}.
 
 handle_call(Request, _From, State) ->
