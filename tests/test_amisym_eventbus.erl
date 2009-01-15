@@ -3,7 +3,7 @@
 
 
 amisym_eventbus_new_test() ->
-    ?assertEqual({ok, started}, amisym_eventbus:start()),
+    ?assertEqual({ok, already_running}, amisym_eventbus:start()),
     Result = whereis(amisym_eventbus),
     ?assert(Result =/= undefined).
 

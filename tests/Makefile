@@ -14,7 +14,7 @@ OBJECTS=test_util test_amilist \
 
 
 test: compile
-	erl $(ERL_FLAGS) -noshell $(foreach t, $(OBJECTS), -s $(t) test) -s init stop
+	erl $(ERL_FLAGS) -noshell -s amisym_app start $(foreach t, $(OBJECTS), -s $(t) test) -s amisym_app stop -s init stop
 
 
 compile: ${OBJECTS:%=$(EBIN_DIR)/%.beam}
