@@ -5,7 +5,8 @@ EBIN_DIR=/usr/lib/erlang/lib/amisym/ebin/
 
 erl \
     -sname ${NODENAME} \
-    -noshell \
+    -datached \
+    -heart \
     -pa ${EBIN_DIR} \
     -pa ./ebin \
     -s amisym_app start

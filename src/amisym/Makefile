@@ -12,7 +12,7 @@ OBJECTS= gen_listener_tcp amisym_interp amisym_session \
 		amisym_server amisym_sup \
 		amisym_eventbus amisym_actions \
 		amisym amisym_client_sup \
-		amisym_app
+		amisym_app amisymctl
 
 
 all: ${OBJECTS:%=$(EBIN_DIR)/%.beam}

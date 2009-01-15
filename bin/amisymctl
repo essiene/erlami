@@ -1,0 +1,15 @@
+#! /bin/bash
+
+NODENAME='amisymctl@localhost'
+COMMAND=$1
+
+EBIN_DIR="/usr/lib/erlang/lib/amisym-1.0/ebin"
+
+erl \
+    -noshell \
+    -pa ${EBIN_DIR} \
+    -pa ebin \
+    -sname ${NODENAME} \
+    -s amisymctl action ${COMMAND} \
+    -s init stop \
+    -extra amisym@localhost \
