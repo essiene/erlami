@@ -1,15 +1,11 @@
 -module(amisym_server).
-
 -behaviour(gen_listener_tcp).
-
 -include("ami.hrl").
 
 -export([
         start/0,
         start/1,
-        start_link/1,
-        stop/1,
-        serve/2
+        start_link/1
     ]).
 
 -export([
@@ -22,36 +18,19 @@
             code_change/3
         ]).
 
--record(server_state, {
-            server_pid,
-            session_list
-            }).
-
-start_link(Config) ->
-    Res = gen_listener_tcp:start_link({local, ?LISTENER}, ?MODULE, [Config], []),
-    error_logger:info_report({{?MODULE, started}, {response, Res}}),
-    Res.
-
 start() ->
-    gen_listener_tcp:start(?LISTENER, ?MODULE, [erlcfg:new()], []). 
+    start(15038).
 
-start(Port) when is_integer(Port) ->
-    gen_listener_tcp:start(?LISTENER, ?MODULE, [Port, 10], []);
+start(Port) ->
+    gen_listener_tcp:start({local, ?LISTENER}, ?MODULE, [Port, 10], []).
 
-start(Config) when is_tuple(Config) ->
-    gen_listener_tcp:start_link({local, ?LISTENER}, ?MODULE, [Config], []).
+start_link(Port) ->
+    gen_listener_tcp:start_link({local, ?LISTENER}, ?MODULE, [Port, 10], []).
 
-stop(_ServerPid) ->
-    gen_listener_tcp:stop({local, ?LISTENER}).    
-
-serve(_, _) ->
-    ok.
-
-init([Config]) -> 
-    init(Config:get(server.port, 15038), Config:get(server.backlog, 10)).
-
-init(Port, Backlog) ->
-    {ok, {
+init([Port, Backlog]) ->
+    {
+        ok, 
+        {
             Port,
             [
                 binary,
