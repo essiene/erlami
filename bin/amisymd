@@ -9,4 +9,4 @@ erl \
     -heart \
     -pa ${EBIN_DIR} \
     -pa ./ebin \
-    -s amisym_app start
+    -s amisym start
