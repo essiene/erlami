@@ -60,7 +60,9 @@ a_originate(Command, true) ->
                 [{response, "Error"}, {message, "Originate failed"}];
             "SIP/pass" ++ _Number ->
                 originate_events("SIP/pass"),
-                [{response, "Success"}, {message, "Originate successfull"}]
+                [{response, "Success"}, {message, "Originate successfull"}];
+            {error, {no_key, channel}} ->
+                [{response, "Error"}, {message, "Channel not specified"}]
         end
 
     catch
