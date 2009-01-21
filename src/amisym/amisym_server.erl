@@ -33,7 +33,7 @@ init([Port, Backlog]) ->
         {
             Port,
             [
-                binary,
+                list,
                 inet, 
                 {active, false},
                 {backlog, Backlog},
