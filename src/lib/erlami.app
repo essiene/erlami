@@ -6,12 +6,12 @@
           ami_interp, amievent,
           amilist, amitcp, 
           interp, messaging, 
-          util,
+          util, gen_listener_tcp,
 
           amisym_sup, amisym_server,
-          amisym_bus, amisym_actions,
-          amisym_interp, amisym_session,
-          amisym,
+          amisym_client_sup, amisym_event_bus, 
+          amisym_actions, amisym_interp, 
+          amisym_session, amisym,
 
           amievent_manager,
           amiclient_event_handler,
@@ -20,7 +20,12 @@
           ami
       ]
   },
-  {registered, [erlami_amisym]},
+  {registered, [ 
+      amisym_server, amisym_sup,
+      amisym_client_sup, amisym_event_bus
+          ]
+  },
+  {mod, {amisym, []}},
   {env, []},
   {applications, [kernel, stdlib]}
  ]

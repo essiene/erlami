@@ -1,54 +1,28 @@
 -module(amisym_sup).
-
 -behaviour(supervisor).
 
 -export([
-            start/0,
-            start/1,
-            start_link/1,
-            stop/0,
-            stop/1,
-            init/1,
-        ping/0
+        start/0
+    ]).
+
+-export([
+        init/1
     ]).
 
 -include("ami.hrl").
 
 
-start_link(Config) when is_tuple(Config) ->
-    supervisor:start_link({local, ?SUPERVISOR}, ?MODULE, [Config]).
-
-start(Config) when is_tuple(Config) ->
-    start_link(Config);
-
-start([]) ->
-    start().
-    
 start() ->
-    start(erlcfg:new()).
+    supervisor:start_link({local, ?SUPERVISOR}, ?MODULE, []).
 
-
-stop() ->
-    exit(?SUPERVISOR, normal).
-
-stop(Pid) ->
-    exit(Pid, normal).
-
-ping() ->
-    pong.
-
-init([Config]) ->
-    error_logger:info_report({in_init_supervisor}),
-    application:start(crypto),
-    application:start(inets),
-
+init([]) ->
     ClientSup = {?CLIENT_SUP, 
         {amisym_client_sup, start_link, []},
         permanent, 5000, supervisor, [amisym_client_sup]
     },
 
     Listener = {?LISTENER,
-        {amisym_server, start_link, [Config]},
+        {amisym_server, start_link, [15038]},
         permanent, 5000, worker, [amisym_server]
     },
 
