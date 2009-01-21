@@ -14,7 +14,8 @@ $(EBIN_DIR)/%.app:  %.app
 
 OBJECTS=util amilist \
 		messaging amitcp \
-		interp ami_interp
+		interp ami_interp \
+		gen_listener_tcp
 
 APPS=erlami
 
