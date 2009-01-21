@@ -40,7 +40,7 @@ init([Port, Backlog]) ->
                 {reuseaddr, true}
             ]
          },
-        #server_state{server_pid=self(), session_list=[]}
+         nil
     }.
 
 handle_accept(Sock, State) ->
