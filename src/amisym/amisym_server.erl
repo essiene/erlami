@@ -44,7 +44,8 @@ init([Port, Backlog]) ->
     }.
 
 handle_accept(Sock, State) ->
-    amisym_client_sup:start_child(Sock),
+    {ok, Pid} = amisym_client_sup:start_child(Sock), 
+    ok = gen_tcp:controlling_process(Sock, Pid),
     {noreply, State}.
 
 handle_call(Request, _From, State) ->
