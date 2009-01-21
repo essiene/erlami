@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 setup_test() ->    
-    application:start(amisym).
+    amisym:start().
 
 login_fail_test() ->
     ?assertEqual({error, {login, failed}}, ami:new("localhost", 15038, "test", "test")).

@@ -3,7 +3,7 @@
 
 
 setup_test() ->
-    application:start(amisym).
+    amisym:start().
 
 amisym_test() ->
     ami:new("localhost", 15038, "sym", "sym").
